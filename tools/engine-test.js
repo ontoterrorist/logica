@@ -203,5 +203,18 @@ check('CC+', ['∀x□(Px⊃Qx)'], '∀x(Px>Qx)', V);
 check('CC+', ['∀xQx'], '∀x(Px>Qx)', I);
 check('CC', [], '∀xPx>Pa', I);
 check('CC+', [], '∀xPx>Pa', V);
+/* capítulo 20 */
+check('IQ', [], '∀xPx⊐Pa', V);
+check('IQ', [], '∃x(Px∨¬Px)', I);
+check('IQ', ['∀x¬Px'], '¬∃xPx', V);
+check('IQ', ['∀x(Pa∨Qx)'], 'Pa∨∀xQx', I);
+check('FOL', ['∀x(Pa∨Qx)'], 'Pa∨∀xQx', V);
+check('IQ', [], '∀xPx⊐∃xPx', V);
+check('IQ', ['¬∀xPx'], '∃x¬Px', I);
+check('IQ', ['∃x¬Px'], '¬∀xPx', V);
+check('IQ=', [], 'a=b⊐(b=c⊐a=c)', V);
+check('IQ=', [], '(a=b∨b=c)⊐a=c', I);
+check('IQ=', [], '∀x∀y(x=y⊐(Px⊐Py))', V);
+check('IQ=', [], '∀x∀y(x=y∨¬x=y)', I);
 console.log(bad ? `${bad} de ${n} fallan` : `${n} pruebas del motor, todas bien`);
 process.exit(bad ? 1 : 0);

@@ -827,7 +827,9 @@ function labRun() {
     const s = ST.stage;
     let r;
     try { r = runCheck(ST.sys, ST.prem, ST.concl); } catch (e) { r = { v: 'unknown' }; }
-    if (s.cmp) { try { r.cmp = runCheck(s.cmp, ST.prem, ST.concl).v; } catch (e) { r.cmp = 'unknown'; } }
+    /* para comparar con la clásica, ⊐ y → se leen como ⊃ */
+    const toCl = f => (f.t === 'ico' || f.t === 'arr' ? L.Bin('imp', toCl(f.a), toCl(f.b)) : f.b ? L.Bin(f.t, toCl(f.a), toCl(f.b)) : f.a ? (f.t === 'all' || f.t === 'ex' ? L.Qf(f.t, f.v, toCl(f.a)) : L.Un(f.t, toCl(f.a))) : f);
+    if (s.cmp) { try { r.cmp = runCheck(s.cmp, ST.prem.map(toCl), toCl(ST.concl)).v; } catch (e) { r.cmp = 'unknown'; } }
     ST.busy = false; ST.res = r;
     say(r.v === 'valid' ? 'ok' : 'hint', labSay(r));
     if (r.v === 'valid') sfx.ok(); else sfx.page();

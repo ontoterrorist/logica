@@ -72,6 +72,13 @@ function RULEBOOK(sys) {
       add('⊐−', 'Condicional no verdadero', '{A⊐B,−i} da {irj}, {A,+j} y {B,−j}, con j nuevo.');
       add('¬+', 'Negación verdadera', '{¬A,+i} junto a {irj} da {A,−j}, para cada j.');
       add('¬−', 'Negación no verdadera', '{¬A,−i} da {irj} y {A,+j}, con j nuevo.');
+      if (sys.fo === 'int') {
+        add('∃+', 'Particular verdadero', '{∃xA,+i} da {Ec,+i} y {A(c),+i}, con c nuevo.');
+        add('∃−', 'Particular no verdadero', '{∃xA,−i} abre {Ea,−i} | {A(a),−i}, para cada nombre a.');
+        add('∀−', 'Universal no verdadero', '{∀xA,−i} da {irj}, {Ec,+j} y {A(c),−j}, con j y c nuevos.');
+        add('∀+', 'Universal verdadero', '{∀xA,+i} junto a {irj} abre {Ea,−j} | {A(a),+j}, para cada nombre a.');
+        add('ini', 'Lista inicial', 'Empieza con {Ea,+0} para cada nombre de las premisas y la conclusión (o {Ec,+0} si no hay ninguno).');
+      }
     } else {
       add('∧+', 'Conjunción', `{A∧B,+${x}} da {A,+${x}} y {B,+${x}}.`);
       add('∧−', 'Conjunción no verdadera', `{A∧B,−${x}} abre {A,−${x}} | {B,−${x}}.`);

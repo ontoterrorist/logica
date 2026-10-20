@@ -37,6 +37,8 @@ def('L', 'L = S0.5⁰', { W: 1, md: 'K', nn: 'L' });
 def('C', 'C', { W: 1, md: 'U', cond: 'C' });
 def('C+', 'C⁺', { W: 1, md: 'U', cond: 'C+' });
 def('I', 'Intuicionista', { W: 1, sg: 1, int: 1, R: 'ρτ' });
+def('IQ', 'Intuicionista de primer orden', { W: 1, sg: 1, int: 1, R: 'ρτ', fo: 'int' });
+def('IQ=', 'Intuicionista de primer orden con identidad', { W: 1, sg: 1, int: 1, R: 'ρτ', fo: 'int', id: 1, ci: 1 });
 def('FDE', 'FDE', { sg: 1, neg: 'fde', imp: 'def' });
 def('K3', 'K3', { sg: 1, neg: 'fde', imp: 'def', cl: 'k3' });
 def('LP', 'LP', { sg: 1, neg: 'fde', imp: 'def', cl: 'lp' });
@@ -266,6 +268,18 @@ function expandS(sys, n, B) {
       return pos   // RM3
         ? [{ r: '⊃+', alts: [[S(f.a, M)], [S(Not(f.b), M)], [S(Bin('and', f.a, Not(f.a)), P), S(Bin('and', f.b, Not(f.b)), P)]] }]
         : [two('⊃−', [S(f.a, P), S(Not(f.b), P), S(Not(f.a), M)], [S(f.a, P), S(Not(f.b), P), S(f.b, M)])];
+    case 'ex': case 'all': {
+      if (sys.fo !== 'int') return [];
+      const I = c => inst(f.a, f.v, c);
+      if (f.t === 'ex' && pos) return [{ r: '∃+', fresh: true, make: X => { const c = X.fresh(); return [[S(Ex(c), P), S(I(c), P)]]; },
+        sat: X => [...X.consts].some(c => X.has(S(Ex(c), P)) && X.has(S(I(c), P))) }];
+      if (f.t === 'ex') return [...B.consts].sort().map(c => two('∃−', [S(Ex(c), M)], [S(I(c), M)]));
+      if (!pos) return [{ r: '∀−', fresh: true, make: X => { const j = X.next(), c = X.fresh(); return [[Rl(x, j), S(Ex(c), P, j), S(I(c), M, j)]]; },
+        sat: X => B.rel.some(r => r.a === x && [...X.consts].some(c => X.has(S(Ex(c), P, r.b)) && X.has(S(I(c), M, r.b)))) }];
+      const out = [];
+      B.rel.filter(r => r.a === x && !r.A).forEach(r => [...B.consts].sort().forEach(c => out.push(two('∀+', [S(Ex(c), M, r.b)], [S(I(c), P, r.b)]))));
+      return out;
+    }
     case 'ico':   // condicional intuicionista
       if (pos) return B.rel.filter(r => r.a === x && !r.A).map(r => two('⊐+', [S(f.a, M, r.b)], [S(f.b, P, r.b)]));
       return [{ r: '⊐−', fresh: true, make: X => { const j = X.next(); return [[Rl(x, j), S(f.a, P, j), S(f.b, M, j)]]; },
@@ -353,12 +367,12 @@ const STRUCT = {
     inst: (sys, B) => {
       const out = [];
       B.path.forEach(n => {
-        if (n.k !== 'f' || n.s || n.f.t !== 'atom' || n.f.p !== '=' || !n.f.args.every(L.isConst)) return;
+        if (n.k !== 'f' || n.s !== (sys.sg ? '+' : '') || n.f.t !== 'atom' || n.f.p !== '=' || !n.f.args.every(L.isConst)) return;
         const [a, b] = n.f.args;
         B.worlds.forEach(j => {
           if (j === n.w) return;
           if (sys.nfree && !B.has(F(Ex(a), j)) && !B.has(F(Ex(b), j))) return;
-          out.push(one('IIR', F(n.f, j)));
+          out.push(one('IIR', F(n.f, j, n.s)));
         });
       });
       return out;
@@ -381,8 +395,9 @@ const STRUCT = {
   'SI': { name: 'Sustitución de idénticos', desc: 'Con a=b, cambia a por b (o b por a) en una fórmula atómica.',
     inst: (sys, B) => {
       const out = [];
-      const ids = B.path.filter(n => n.k === 'f' && !n.s && n.f.t === 'atom' && n.f.p === '=' && n.f.args[0] !== n.f.args[1]);
-      const ats = B.path.filter(n => n.k === 'f' && !n.s && n.f.t === 'atom' && n.f.args.length);
+      const sg = sys.sg ? '+' : '';
+      const ids = B.path.filter(n => n.k === 'f' && n.s === sg && n.f.t === 'atom' && n.f.p === '=' && n.f.args[0] !== n.f.args[1]);
+      const ats = B.path.filter(n => n.k === 'f' && n.s === sg && n.f.t === 'atom' && n.f.args.length);
       ids.forEach(e => {
         const [a, b] = e.f.args;
         ats.forEach(m => {
@@ -392,7 +407,7 @@ const STRUCT = {
             for (let mask = 1; mask < (1 << pos.length); mask++) {
               const args = m.f.args.slice();
               pos.forEach((p, k) => { if (mask & (1 << k)) args[p] = y; });
-              out.push(one('SI', F(Atom(m.f.p, args), m.w)));
+              out.push(one('SI', F(Atom(m.f.p, args), m.w, sg)));
             }
           });
         });
@@ -410,7 +425,7 @@ function structOf(sys) {
   if (sys.nfree && sys.id) ids.push('SIE');
   if (sys.di) ids.push('DI');
   if (sys.ni) ids.push('IIR', 'DSC');
-  if (sys.ci) ids.push('DSC');
+  if (sys.ci && !sys.int) ids.push('DSC');
   return ids;
 }
 
@@ -429,7 +444,7 @@ function clash(sys, a, b) {
   if ((sys.cl === 'lp' || sys.cl === 'both') && a.s === '-' && b.s === '-' && (negOf(a, b) || negOf(b, a))) return true;
   return false;
 }
-const selfClash = (sys, a) => a.k === 'f' && !sys.sg && !sys.nfree && a.f.t === 'not' && a.f.a.t === 'atom' && a.f.a.p === '=' && a.f.a.args[0] === a.f.a.args[1];
+const selfClash = (sys, a) => a.k === 'f' && sys.sg ? (a.s === '-' && a.f.t === 'atom' && a.f.p === '=' && a.f.args[0] === a.f.args[1]) : a.k === 'f' && !sys.nfree && a.f.t === 'not' && a.f.a.t === 'atom' && a.f.a.p === '=' && a.f.a.args[0] === a.f.a.args[1];
 
 /* ================= el árbol ================= */
 class Tab {
@@ -440,6 +455,11 @@ class Tab {
     this.nodes = []; this.root = null;
     const w = this.sys.W ? '0' : null;
     const init = this.sys.sg ? [...prem.map(f => F(f, w, '+')), F(concl, w, '-')] : [...prem.map(f => F(f, w)), F(Not(concl), w)];
+    if (this.sys.fo === 'int') {   // 20.4.1: lo nombrado en premisas y conclusión existe desde el principio
+      const cs = new Set();
+      [...prem, concl].forEach(f => L.constsOf(f, cs));
+      (cs.size ? [...cs].sort() : [L.freshConst(cs)]).forEach(c => init.unshift(F(Ex(c), '0', '+')));
+    }
     let at = null;
     init.forEach(spec => { at = this.add(spec, at, null, 'ini'); });
   }
@@ -730,7 +750,7 @@ function readModel(t, leaf) {
   const consts = [...B.consts].sort();
   consts.forEach(c => { repOf[c] = c; });
   const find = c => (repOf[c] === c ? c : (repOf[c] = find(repOf[c])));
-  lits.forEach(n => { if (!n.s && n.f.t === 'atom' && n.f.p === '=' && n.f.args.every(L.isConst)) { const a = find(n.f.args[0]), b = find(n.f.args[1]); if (a !== b) repOf[a > b ? a : b] = a < b ? a : b; } });
+  lits.forEach(n => { if ((!n.s || n.s === '+') && n.f.t === 'atom' && n.f.p === '=' && n.f.args.every(L.isConst)) { const a = find(n.f.args[0]), b = find(n.f.args[1]); if (a !== b) repOf[a > b ? a : b] = a < b ? a : b; } });
   /* un descriptor denota, en cada mundo, lo que denota el nombre rígido que la rama iguala con él allí */
   M.desc = {};
   lits.forEach(n => { if (!n.s && n.f.t === 'atom' && n.f.p === '=') { const [x, y] = n.f.args; const d = L.isDesc(x) ? x : L.isDesc(y) ? y : null, c = d === x ? y : x; if (d && L.isConst(c)) (M.desc[n.w] = M.desc[n.w] || {})[d] = c; } });
@@ -739,7 +759,7 @@ function readModel(t, leaf) {
     const per = {};
     M.W.forEach(w => { const o = {}; consts.forEach(c => { o[c] = c; }); per[w] = o; });
     const fw = (w, c) => (per[w][c] === c || per[w][c] == null ? c : (per[w][c] = fw(w, per[w][c])));
-    lits.forEach(n => { if (!n.s && n.f.t === 'atom' && n.f.p === '=' && n.f.args.every(L.isConst)) { const a = fw(n.w, n.f.args[0]), b = fw(n.w, n.f.args[1]); if (a !== b) per[n.w][a > b ? a : b] = a < b ? a : b; } });
+    lits.forEach(n => { if ((!n.s || n.s === '+') && n.f.t === 'atom' && n.f.p === '=' && n.f.args.every(L.isConst)) { const a = fw(n.w, n.f.args[0]), b = fw(n.w, n.f.args[1]); if (a !== b) per[n.w][a > b ? a : b] = a < b ? a : b; } });
     M.rep = (c, w) => { const d = L.isDesc(c) ? (M.desc[w] && M.desc[w][c]) : c; return d ? fw(w, d) + '·' + w : '?' + c; };
   }
   M.dom = sys.ci ? consts.slice() : [...new Set(consts.map(find))];
@@ -756,7 +776,7 @@ function readModel(t, leaf) {
       }
     } else {
       const atomic = f.t === 'atom', negAt = f.t === 'not' && f.a.t === 'atom';
-      if (n.s === '+' && atomic) M.pos[w].add(str(f));
+      if (n.s === '+' && atomic) M.pos[w].add(str(g(f, w)));
       if (n.s === '+' && negAt) M.neg[w].add(str(f.a));
       if (n.s === '-' && atomic) (M.notpos = M.notpos || new Set()).add(w + '|' + str(f));
       if (n.s === '-' && negAt) (M.notneg = M.notneg || new Set()).add(w + '|' + str(f.a));
@@ -793,6 +813,7 @@ function readModel(t, leaf) {
   M.E = {};
   M.W.forEach(w => { M.E[w] = new Set(); });
   lits.forEach(n => { if (!n.s && n.f.t === 'atom' && n.f.p === 'E') M.E[n.w].add(find(n.f.args[0])); });
+  if (sys.fo === 'int') M.W.forEach(w => M.pos[w].forEach(a => { if (a[0] === 'E' && a.length === 2) M.E[w].add(a[1]); }));
   return M;
 }
 
@@ -877,7 +898,11 @@ function evStar(sys, M, f, w) {
   const tv = b => ({ t: b, fa: !b });
   const normal = M.normal.includes(w);
   switch (f.t) {
-    case 'atom': return tv(M.pos[w].has(str(f)));
+    case 'atom':
+      if (f.p === '=') return tv(M.rep(f.args[0], w) === M.rep(f.args[1], w));
+      return tv(M.pos[w].has(str(f.args.length ? Atom(f.p, f.args.map(a => M.rep(a, w))) : f)));
+    case 'ex': return tv([...M.E[w]].some(d => evStar(sys, M, subst(f.a, f.v, d), w).t));
+    case 'all': return tv(M.W.filter(v => relOK(M, w, v)).every(v => [...M.E[v]].every(d => evStar(sys, M, subst(f.a, f.v, d), v).t)));
     case 'not':
       if (sys.int) return tv(M.W.filter(v => relOK(M, w, v)).every(v => !evStar(sys, M, f.a, v).t));
       return tv(!evStar(sys, M, f.a, star(w)).t);
