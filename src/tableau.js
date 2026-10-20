@@ -63,7 +63,22 @@ def('DW', 'DW = B + C8', { W: 1, sg: 1, neg: 'star', imp: 'def', arr: 'B', tern:
 def('CB', 'CB', { W: 1, sg: 1, neg: 'star', imp: 'def', arr: 'B', tern: 1, cond: 'C' });
 def('CB+', 'CB⁺', { W: 1, sg: 1, neg: 'star', imp: 'def', arr: 'B', tern: 1, cond: 'C+' });
 def('FOL', 'Primer orden clásica', { fo: 'cl', id: 1 });
-def('FREE', 'Lógica libre', { fo: 'free', id: 1 });
+def('CK', 'CK (dominio constante)', { W: 1, md: 'K', fo: 'cl' });
+def('CT', 'CT = CKρ', { W: 1, md: 'K', fo: 'cl', R: 'ρ' });
+def('CS4', 'CS4 = CKρτ', { W: 1, md: 'K', fo: 'cl', R: 'ρτ' });
+def('CS5', 'CS5 = CKυ', { W: 1, md: 'U', fo: 'cl' });
+def('CKt', 'CKt (tiempo, dominio constante)', { W: 1, md: 'K', fo: 'cl', tense: 1 });
+def('VK', 'VK (dominio variable)', { W: 1, md: 'K', fo: 'var' });
+def('VT', 'VT = VKρ', { W: 1, md: 'K', fo: 'var', R: 'ρ' });
+def('VKσ', 'VKσ', { W: 1, md: 'K', fo: 'var', R: 'σ' });
+def('VS4', 'VS4 = VKρτ', { W: 1, md: 'K', fo: 'var', R: 'ρτ' });
+def('VS5', 'VS5 = VKυ', { W: 1, md: 'U', fo: 'var' });
+def('VKt', 'VKt (tiempo, dominio variable)', { W: 1, md: 'K', fo: 'var', tense: 1 });
+def('VKτt', 'VKτt', { W: 1, md: 'K', fo: 'var', tense: 1, R: 'τ' });
+def('VK+', 'VK con dominios crecientes', { W: 1, md: 'K', fo: 'var', di: 1 });
+def('VK−', 'VK negativa', { W: 1, md: 'K', fo: 'var', nfree: 1 });
+def('FREE', 'Lógica libre positiva', { fo: 'free', id: 1 });
+def('NFREE', 'Lógica libre negativa', { fo: 'free', id: 1, nfree: 1 });
 
 /* ================= nodos ================= */
 const F = (f, w, s) => ({ k: 'f', f, w: w == null ? null : String(w), s: s || '' });
@@ -111,9 +126,9 @@ const inst = (A, v, c) => subst(A, v, c);
 function quantU(sys, n, B, f, w, neg) {
   const out = [];
   if (f.t === 'all') {   // ∀xA: un ejemplar por cada nombre de la rama (o uno nuevo si no hay)
-    if (sys.fo === 'free' || sys.fo === 'var') {
-      const es = B.path.filter(m => m.k === 'f' && !m.s && m.w === w && m.f.t === 'atom' && m.f.p === 'E');
-      es.forEach(m => out.push(one('∀', F(inst(f.a, f.v, m.f.args[0]), w))));
+    if (sys.fo === 'free' || sys.fo === 'var') {   // libre (13.3.1) y dominio variable (15.4.1): o bien ¬Ea, o bien A(a)
+      if (B.consts.size) [...B.consts].sort().forEach(c => out.push(two('∀', [F(Not(Ex(c)), w)], [F(inst(f.a, f.v, c), w)])));
+      else out.push({ r: '∀', fresh: true, make: X => { const c = X.fresh(); return [[F(Not(Ex(c)), w)], [F(inst(f.a, f.v, c), w)]]; }, sat: X => X.consts.size > 0 });
     } else if (B.consts.size) [...B.consts].sort().forEach(c => out.push(one('∀', F(inst(f.a, f.v, c), w))));
     else out.push({ r: '∀', fresh: true, make: X => [[F(inst(f.a, f.v, X.fresh()), w)]], sat: X => X.consts.size > 0 });
   }
@@ -303,6 +318,20 @@ const STRUCT = {
       ants.forEach(A => out.push(two('CB+', [F(A, '0', '-')], [F(A, '0', '+'), Rl('0', '0', A)])));
       return out;
     } },
+  'NCR': { name: 'Restricción de negatividad', desc: 'De una atómica Pa₁…aₙ (también a=b) pasa a Ea₁, …, Eaₙ: lo que no existe no tiene propiedades positivas.',
+    inst: (sys, B) => {
+      const out = [];
+      B.path.forEach(n => { if (n.k === 'f' && !n.s && n.f.t === 'atom' && n.f.args.length && n.f.p !== 'E') n.f.args.forEach(a => { if (L.isConst(a)) out.push(one('NCR', F(Ex(a), n.w))); }); });
+      return out;
+    } },
+  'SIE': { name: 'Autoidentidad de lo existente', desc: 'De Ea pasa a a=a.',
+    inst: (sys, B) => B.path.filter(n => n.k === 'f' && !n.s && n.f.t === 'atom' && n.f.p === 'E').map(n => one('SIE', F(Eq(n.f.args[0], n.f.args[0]), n.w))) },
+  'DI': { name: 'Dominios crecientes', desc: 'De irj y Ea,i pasa a Ea,j: lo que existe en un mundo existe en los que ve.',
+    inst: (sys, B) => {
+      const out = [];
+      B.path.forEach(n => { if (n.k === 'f' && !n.s && n.f.t === 'atom' && n.f.p === 'E') B.rel.forEach(r => { if (!r.A && r.a === n.w && r.b !== n.w) out.push(one('DI', F(n.f, r.b))); }); });
+      return out;
+    } },
   'C+': { name: 'Centrado', desc: 'Para cada mundo i y cada antecedente A de un condicional: o bien ¬A,i, o bien A,i e i r_A i.',
     inst: (sys, B) => {
       const ants = new Map();
@@ -339,6 +368,9 @@ function structOf(sys) {
   if (sys.int || sys.cn || sys.pers) ids.push('her');
   if (sys.cond === 'C+') ids.push(sys.sg ? 'CB+' : 'C+');
   if (sys.id && sys.fo) ids.push('SI');
+  if (sys.nfree) ids.push('NCR');
+  if (sys.nfree && sys.id) ids.push('SIE');
+  if (sys.di) ids.push('DI');
   return ids;
 }
 
@@ -357,7 +389,7 @@ function clash(sys, a, b) {
   if ((sys.cl === 'lp' || sys.cl === 'both') && a.s === '-' && b.s === '-' && (negOf(a, b) || negOf(b, a))) return true;
   return false;
 }
-const selfClash = (sys, a) => a.k === 'f' && !sys.sg && a.f.t === 'not' && a.f.a.t === 'atom' && a.f.a.p === '=' && a.f.a.args[0] === a.f.a.args[1];
+const selfClash = (sys, a) => a.k === 'f' && !sys.sg && !sys.nfree && a.f.t === 'not' && a.f.a.t === 'atom' && a.f.a.p === '=' && a.f.a.args[0] === a.f.a.args[1];
 
 /* ================= el árbol ================= */
 class Tab {
@@ -721,7 +753,7 @@ function evU(sys, M, f, w) {
   const normal = M.normal.includes(w);
   switch (f.t) {
     case 'atom':
-      if (f.p === '=') return M.rep(f.args[0]) === M.rep(f.args[1]);
+      if (f.p === '=') return M.rep(f.args[0]) === M.rep(f.args[1]) && (!sys.nfree || M.E[w].has(M.rep(f.args[0])));
       return M.pos[w].has(str(f.args.length ? Atom(f.p, f.args.map(M.rep)) : f));
     case 'not': return !evU(sys, M, f.a, w);
     case 'and': return evU(sys, M, f.a, w) && evU(sys, M, f.b, w);

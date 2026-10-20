@@ -1270,12 +1270,34 @@ def('N*', 'N*', { W: 1, sg: 1, neg: 'star', imp: 'def', arr: 'N*' });
 def('I4', 'I4', { W: 1, sg: 1, neg: 'fde', imp: 'def', cn: 1, R: 'ρτ' });
 def('I3', 'I3', { W: 1, sg: 1, neg: 'fde', imp: 'def', cn: 1, cl: 'k3', R: 'ρτ' });
 def('W', 'W (conexiva)', { W: 1, sg: 1, neg: 'fde', imp: 'def', cn: 'W', R: 'ρτ' });
+def('KFDE', 'K_FDE (modal de cuatro valores)', { W: 1, sg: 1, neg: 'fde', imp: 'def', md: 'K' });
+def('KK3', 'K_K3', { W: 1, sg: 1, neg: 'fde', imp: 'def', md: 'K', cl: 'k3' });
+def('KLP', 'K_LP', { W: 1, sg: 1, neg: 'fde', imp: 'def', md: 'K', cl: 'lp' });
+def('KFDEρ', 'K_FDE ρ', { W: 1, sg: 1, neg: 'fde', imp: 'def', md: 'K', R: 'ρ' });
+def('KK3τ', 'K_K3 τ', { W: 1, sg: 1, neg: 'fde', imp: 'def', md: 'K', cl: 'k3', R: 'τ' });
+def('KLPρ', 'K_LP ρ', { W: 1, sg: 1, neg: 'fde', imp: 'def', md: 'K', cl: 'lp', R: 'ρ' });
+def('A', 'A (Aristóteles): K3ρτ con persistencia', { W: 1, sg: 1, neg: 'fde', imp: 'def', md: 'K', cl: 'k3', R: 'ρτ', pers: 1 });
 def('B', 'B (relevante básica)', { W: 1, sg: 1, neg: 'star', imp: 'def', arr: 'B', tern: 1 });
 def('DW', 'DW = B + C8', { W: 1, sg: 1, neg: 'star', imp: 'def', arr: 'B', tern: 1, R: 'C8' });
 def('CB', 'CB', { W: 1, sg: 1, neg: 'star', imp: 'def', arr: 'B', tern: 1, cond: 'C' });
 def('CB+', 'CB⁺', { W: 1, sg: 1, neg: 'star', imp: 'def', arr: 'B', tern: 1, cond: 'C+' });
 def('FOL', 'Primer orden clásica', { fo: 'cl', id: 1 });
-def('FREE', 'Lógica libre', { fo: 'free', id: 1 });
+def('CK', 'CK (dominio constante)', { W: 1, md: 'K', fo: 'cl' });
+def('CT', 'CT = CKρ', { W: 1, md: 'K', fo: 'cl', R: 'ρ' });
+def('CS4', 'CS4 = CKρτ', { W: 1, md: 'K', fo: 'cl', R: 'ρτ' });
+def('CS5', 'CS5 = CKυ', { W: 1, md: 'U', fo: 'cl' });
+def('CKt', 'CKt (tiempo, dominio constante)', { W: 1, md: 'K', fo: 'cl', tense: 1 });
+def('VK', 'VK (dominio variable)', { W: 1, md: 'K', fo: 'var' });
+def('VT', 'VT = VKρ', { W: 1, md: 'K', fo: 'var', R: 'ρ' });
+def('VKσ', 'VKσ', { W: 1, md: 'K', fo: 'var', R: 'σ' });
+def('VS4', 'VS4 = VKρτ', { W: 1, md: 'K', fo: 'var', R: 'ρτ' });
+def('VS5', 'VS5 = VKυ', { W: 1, md: 'U', fo: 'var' });
+def('VKt', 'VKt (tiempo, dominio variable)', { W: 1, md: 'K', fo: 'var', tense: 1 });
+def('VKτt', 'VKτt', { W: 1, md: 'K', fo: 'var', tense: 1, R: 'τ' });
+def('VK+', 'VK con dominios crecientes', { W: 1, md: 'K', fo: 'var', di: 1 });
+def('VK−', 'VK negativa', { W: 1, md: 'K', fo: 'var', nfree: 1 });
+def('FREE', 'Lógica libre positiva', { fo: 'free', id: 1 });
+def('NFREE', 'Lógica libre negativa', { fo: 'free', id: 1, nfree: 1 });
 
 /* ================= nodos ================= */
 const F = (f, w, s) => ({ k: 'f', f, w: w == null ? null : String(w), s: s || '' });
@@ -1323,9 +1345,9 @@ const inst = (A, v, c) => subst(A, v, c);
 function quantU(sys, n, B, f, w, neg) {
   const out = [];
   if (f.t === 'all') {   // ∀xA: un ejemplar por cada nombre de la rama (o uno nuevo si no hay)
-    if (sys.fo === 'free' || sys.fo === 'var') {
-      const es = B.path.filter(m => m.k === 'f' && !m.s && m.w === w && m.f.t === 'atom' && m.f.p === 'E');
-      es.forEach(m => out.push(one('∀', F(inst(f.a, f.v, m.f.args[0]), w))));
+    if (sys.fo === 'free' || sys.fo === 'var') {   // libre (13.3.1) y dominio variable (15.4.1): o bien ¬Ea, o bien A(a)
+      if (B.consts.size) [...B.consts].sort().forEach(c => out.push(two('∀', [F(Not(Ex(c)), w)], [F(inst(f.a, f.v, c), w)])));
+      else out.push({ r: '∀', fresh: true, make: X => { const c = X.fresh(); return [[F(Not(Ex(c)), w)], [F(inst(f.a, f.v, c), w)]]; }, sat: X => X.consts.size > 0 });
     } else if (B.consts.size) [...B.consts].sort().forEach(c => out.push(one('∀', F(inst(f.a, f.v, c), w))));
     else out.push({ r: '∀', fresh: true, make: X => [[F(inst(f.a, f.v, X.fresh()), w)]], sat: X => X.consts.size > 0 });
   }
@@ -1422,6 +1444,8 @@ function expandS(sys, n, B) {
         if (sys.imp === 'def') return [one('¬⊃', S(Not(Bin('or', Not(g.a), g.b)), s))];
         return pos ? [one('¬⊃+', S(g.a, P), S(Not(g.b), P))] : [two('¬⊃−', [S(g.a, M)], [S(Not(g.b), M)])];
       case 'iff': return [one('¬≡', S(Not(Bin('and', Bin('imp', g.a, g.b), Bin('imp', g.b, g.a))), s))];
+      case 'box': return [one('¬□', S(Un('dia', Not(g.a)), s))];
+      case 'dia': return [one('¬◇', S(Un('box', Not(g.a)), s))];
       case 'ico':
         if (sys.cn === 'W') return [one(pos ? '¬⊐+' : '¬⊐−', S(Bin('ico', g.a, Not(g.b)), s))];
         return pos ? [one('¬⊐+', S(g.a, P), S(Not(g.b), P))] : [two('¬⊐−', [S(g.a, M)], [S(Not(g.b), M)])];
@@ -1463,6 +1487,13 @@ function expandS(sys, n, B) {
       if (pos) return worldsAll().map(j => two('→+', [S(f.a, M, j)], [S(f.b, P, j)]));
       return [{ r: '→−', fresh: true, make: X => { const j = X.next(); return [[S(f.a, P, j), S(f.b, M, j)]]; },
         sat: X => X.worlds.some(j => X.has(S(f.a, P, j)) && X.has(S(f.b, M, j))) }];
+    case 'box': case 'dia': {   // modales de muchos valores (11a): + y − como □/◇ y sus duales
+      const rel = B.rel.filter(t => t.a === x && !t.A);
+      const every = (f.t === 'box') === pos;   // □A,+ y ◇A,− miran a todos los mundos accesibles
+      const sg = pos ? P : M, name = (f.t === 'box' ? '□' : '◇') + (pos ? '+' : '−');
+      if (every) return rel.map(t => one(name, S(f.a, sg, t.b)));
+      return [{ r: name, fresh: true, make: X => { const j = X.next(); return [[Rl(x, j), S(f.a, sg, j)]]; }, sat: X => rel.some(t => X.has(S(f.a, sg, t.b))) }];
+    }
     case 'cnd': {   // > sobre una lógica relevante (CB, CB⁺)
       const rel = B.rel.filter(t => t.a === x && t.A && L.eq(t.A, f.a));
       if (pos) return rel.map(t => one('>+', S(f.b, P, t.b)));
@@ -1491,7 +1522,7 @@ const STRUCT = {
       const out = [];
       B.path.forEach(n => {
         if (n.k !== 'f' || n.s !== '+') return;
-        const lit = n.f.t === 'atom' || (sys.cn && n.f.t === 'not' && n.f.a.t === 'atom');
+        const lit = n.f.t === 'atom' || ((sys.cn || sys.pers) && n.f.t === 'not' && n.f.a.t === 'atom');
         if (lit) B.rel.forEach(r => { if (r.a === n.w && r.b !== n.w) out.push(one('her', F(n.f, r.b, '+'))); });
       });
       return out;
@@ -1504,6 +1535,20 @@ const STRUCT = {
       B.path.forEach(n => { if (n.k === 'f') { const g = n.f.t === 'not' ? n.f.a : n.f; if (g.t === 'cnd') ants.set(str(g.a), g.a); } });
       const out = [];
       ants.forEach(A => out.push(two('CB+', [F(A, '0', '-')], [F(A, '0', '+'), Rl('0', '0', A)])));
+      return out;
+    } },
+  'NCR': { name: 'Restricción de negatividad', desc: 'De una atómica Pa₁…aₙ (también a=b) pasa a Ea₁, …, Eaₙ: lo que no existe no tiene propiedades positivas.',
+    inst: (sys, B) => {
+      const out = [];
+      B.path.forEach(n => { if (n.k === 'f' && !n.s && n.f.t === 'atom' && n.f.args.length && n.f.p !== 'E') n.f.args.forEach(a => { if (L.isConst(a)) out.push(one('NCR', F(Ex(a), n.w))); }); });
+      return out;
+    } },
+  'SIE': { name: 'Autoidentidad de lo existente', desc: 'De Ea pasa a a=a.',
+    inst: (sys, B) => B.path.filter(n => n.k === 'f' && !n.s && n.f.t === 'atom' && n.f.p === 'E').map(n => one('SIE', F(Eq(n.f.args[0], n.f.args[0]), n.w))) },
+  'DI': { name: 'Dominios crecientes', desc: 'De irj y Ea,i pasa a Ea,j: lo que existe en un mundo existe en los que ve.',
+    inst: (sys, B) => {
+      const out = [];
+      B.path.forEach(n => { if (n.k === 'f' && !n.s && n.f.t === 'atom' && n.f.p === 'E') B.rel.forEach(r => { if (!r.A && r.a === n.w && r.b !== n.w) out.push(one('DI', F(n.f, r.b))); }); });
       return out;
     } },
   'C+': { name: 'Centrado', desc: 'Para cada mundo i y cada antecedente A de un condicional: o bien ¬A,i, o bien A,i e i r_A i.',
@@ -1539,9 +1584,12 @@ const STRUCT = {
 function structOf(sys) {
   const ids = [...sys.R.replace('C8', '')];
   if (sys.R.includes('C8')) ids.push('C8');
-  if (sys.int || sys.cn) ids.push('her');
+  if (sys.int || sys.cn || sys.pers) ids.push('her');
   if (sys.cond === 'C+') ids.push(sys.sg ? 'CB+' : 'C+');
   if (sys.id && sys.fo) ids.push('SI');
+  if (sys.nfree) ids.push('NCR');
+  if (sys.nfree && sys.id) ids.push('SIE');
+  if (sys.di) ids.push('DI');
   return ids;
 }
 
@@ -1560,7 +1608,7 @@ function clash(sys, a, b) {
   if ((sys.cl === 'lp' || sys.cl === 'both') && a.s === '-' && b.s === '-' && (negOf(a, b) || negOf(b, a))) return true;
   return false;
 }
-const selfClash = (sys, a) => a.k === 'f' && !sys.sg && a.f.t === 'not' && a.f.a.t === 'atom' && a.f.a.p === '=' && a.f.a.args[0] === a.f.a.args[1];
+const selfClash = (sys, a) => a.k === 'f' && !sys.sg && !sys.nfree && a.f.t === 'not' && a.f.a.t === 'atom' && a.f.a.p === '=' && a.f.a.args[0] === a.f.a.args[1];
 
 /* ================= el árbol ================= */
 class Tab {
@@ -1899,11 +1947,11 @@ function readModel(t, leaf) {
   M.R3 = path.filter(n => n.k === 'r3').map(n => [n.a, n.b, n.c]);
   if (sys.md === 'U' && !sys.cond) M.W.forEach(a => M.W.forEach(b => M.R.push([a, b])));
   if (sys.cond) M.W.forEach(a => M.W.forEach(b => M.R.push([a, b])));
-  if (sys.int || sys.cn) {   // la relación de un modelo intuicionista es reflexiva y transitiva, y hay herencia
+  if (sys.int || sys.cn || sys.pers) {   // la relación de un modelo intuicionista es reflexiva y transitiva, y hay herencia
     const has = (a, b) => M.R.some(r => r[0] === a && r[1] === b);
     M.W.forEach(w => { if (!has(w, w)) M.R.push([w, w]); });
     for (let ch = true; ch;) { ch = false; M.R.slice().forEach(([a, b]) => M.R.slice().forEach(([c, d]) => { if (b === c && !has(a, d)) { M.R.push([a, d]); ch = true; } })); }
-    M.R.forEach(([a, b]) => { M.pos[a].forEach(p => M.pos[b].add(p)); if (sys.cn) M.neg[a].forEach(p => M.neg[b].add(p)); });
+    M.R.forEach(([a, b]) => { M.pos[a].forEach(p => M.pos[b].add(p)); if (sys.cn || sys.pers) M.neg[a].forEach(p => M.neg[b].add(p)); });
   }
   M.normal = M.W.filter(w => {
     if (sys.nn === 'L') return w === '0';
@@ -1924,7 +1972,7 @@ function evU(sys, M, f, w) {
   const normal = M.normal.includes(w);
   switch (f.t) {
     case 'atom':
-      if (f.p === '=') return M.rep(f.args[0]) === M.rep(f.args[1]);
+      if (f.p === '=') return M.rep(f.args[0]) === M.rep(f.args[1]) && (!sys.nfree || M.E[w].has(M.rep(f.args[0])));
       return M.pos[w].has(str(f.args.length ? Atom(f.p, f.args.map(M.rep)) : f));
     case 'not': return !evU(sys, M, f.a, w);
     case 'and': return evU(sys, M, f.a, w) && evU(sys, M, f.b, w);
@@ -1974,6 +2022,10 @@ function evS(sys, M, f, w) {
       return { t: a.fa || b.t, fa: a.t && b.fa };
     }
     case 'iff': return T(Bin('and', Bin('imp', f.a, f.b), Bin('imp', f.b, f.a)));
+    case 'box': case 'dia': {
+      const acc = M.W.filter(v => relOK(M, w, v)).map(v => evS(sys, M, f.a, v));
+      return f.t === 'box' ? { t: acc.every(v => v.t), fa: acc.some(v => v.fa) } : { t: acc.some(v => v.t), fa: acc.every(v => v.fa) };
+    }
     case 'ico': {   // negación construible (I4, I3) y la conexiva W
       const acc = M.W.filter(v => relOK(M, w, v));
       const a = T(f.a), b = T(f.b);
@@ -2207,8 +2259,8 @@ function RULEBOOK(sys) {
       add('¬>', 'Condicional negado', sys.cond === 'C+' ? '{¬(A>B), i} da {irₐj}, {A, j} y {¬B, j}, con j nuevo.' : '{¬(A>B), i} da {irₐj} y {¬B, j}, con j nuevo.');
     }
     if (sys.fo) {
-      add('∀', 'Universal', sys.fo === 'cl' ? '{∀xA} da {A(a)} para cada nombre a de la rama (si no hay ninguno, se inventa uno).' : '{∀xA} junto a {Ea} da {A(a)}.');
-      add('∃', 'Particular', sys.fo === 'cl' ? '{∃xA} da {A(c)} con un nombre c nuevo.' : '{∃xA} da {Ec} y {A(c)}, con c nuevo.');
+      add('∀', 'Universal', sys.fo === 'cl' ? '{∀xA} da {A(a)} para cada nombre a de la rama (si no hay ninguno, se inventa uno).' : sys.fo === 'free' ? '{∀xA} abre {¬Ea} | {A(a)}, para cada nombre a de la rama (uno nuevo si no hay ninguno).' : '{∀xA, i} abre {¬Ea, i} | {A(a), i}, para cada nombre a de la rama.');
+      add('∃', 'Particular', sys.fo === 'cl' ? '{∃xA} da {A(c)} con un nombre c nuevo.' : '{∃xA} da {Ec} y {A(c)} (en el mismo mundo), con c nuevo.');
       add('¬∀', 'Universal negado', '{¬∀xA} da {∃x¬A}.');
       add('¬∃', 'Particular negado', '{¬∃xA} da {∀x¬A}.');
     }
@@ -2234,6 +2286,14 @@ function RULEBOOK(sys) {
         add('¬', 'Negación con estrella', '{¬A,+x} da {A,−x̄}; {¬A,−x} da {A,+x̄}. Si x es i, x̄ es i#, y al revés.');
       }
       if (sys.imp === 'def') add('⊃', 'Condicional material', `{A⊃B} se trata como {¬A∨B}.`);
+      if (sys.md === 'K') {
+        add('□+', 'Necesidad verdadera', '{□A,+i} junto a {irj} da {A,+j}, para cada j.');
+        add('□−', 'Necesidad no verdadera', '{□A,−i} da {irj} y {A,−j}, con j nuevo.');
+        add('◇+', 'Posibilidad verdadera', '{◇A,+i} da {irj} y {A,+j}, con j nuevo.');
+        add('◇−', 'Posibilidad no verdadera', '{◇A,−i} junto a {irj} da {A,−j}, para cada j.');
+        add('¬□', 'Conmutar', '{¬□A,±i} da {◇¬A,±i}; {¬◇A,±i} da {□¬A,±i}.');
+        if (sys.pers) add('her.', 'Persistencia', 'De {p,+i} o {¬p,+i}, junto a {irj}, pasa a lo mismo en j.');
+      }
       if (sys.imp === 'L3') add('⊃', 'Condicional de Ł3', '{A⊃B,+} abre tres ramas: {¬A,+} | {B,+} | {A∨¬A,−} y {B∨¬B,−}. {A⊃B,−} da {¬A,−} y {B,−}, y abre {A,+} | {¬B,+}.');
       if (sys.imp === 'RM3') add('⊃', 'Condicional de RM3', '{A⊃B,+} abre tres ramas: {A,−} | {¬B,−} | {A∧¬A,+} y {B∧¬B,+}. {A⊃B,−} da {A,+} y {¬B,+}, y abre {¬A,−} | {B,−}.');
       if (sys.arr === 'K4' || sys.arr === 'N4' || sys.arr === 'K*' || sys.arr === 'N*') {
@@ -3003,7 +3063,7 @@ C.world({
       { q: 'Si {p} vale i, ¿cuánto vale {p∨¬p} en la supervaluación?', opts: ['1', 'i', '0'], ok: 0, why: 'En cada resolución, una de las dos disyuntas es verdadera.' },
       { q: 'En la supervaluación, ¿qué deja de valer con varias conclusiones?', opts: ['{A∨B ⊢ A, B}', '{A ⊢ A∨B}', '{A∧B ⊢ A}'], ok: 0, why: 'La disyunción puede ser superverdadera sin que lo sea ninguna disyunta.' }
     ]),
-    V('La máquina de tablas', { sys: ['K3', 'Ł3', 'LP', 'RM3', 'CL'], syms: '¬∧∨⊃≡', goals: ['valid', 'invalid', 'gap'], cmp: 'CL',
+    V('La máquina de tablas', { mv: true, sys: ['K3', 'Ł3', 'LP', 'RM3', 'CL'], syms: '¬∧∨⊃≡', goals: ['valid', 'invalid', 'gap'], cmp: 'CL',
       intro: 'Esta máquina no hace árboles: revisa todas las valuaciones con tres valores. Busca una inferencia clásica que falle en alguna de estas lógicas.',
       outro: 'Con finitos valores, la validez siempre es decidible por tablas.',
       ex: [[[], 'p∨¬p', 'invalid', 'K3'], [[], 'p∨¬p', 'valid', 'LP'], [['p∧¬p'], 'q', 'valid', 'K3'], [['p∧¬p'], 'q', 'invalid', 'LP'], [['p', 'p⊃q'], 'q', 'valid', 'RM3'], [[], 'p⊃p', 'valid', 'Ł3']] })
@@ -3281,6 +3341,277 @@ C.world({
       intro: 'Árboles con relación ternaria y estrella. Compara B con DW, N* y K*.',
       outro: 'B extiende propiamente a N*, y K* extiende a B.',
       ex: [[['p→q'], '(q→r)→(p→r)', 'valid', 'B'], [['p→q'], '(q→r)→(p→r)', 'invalid', 'N*'], [[], '(p→¬q)→(q→¬p)', 'valid', 'DW'], [[], 'p→((p→q)→q)', 'invalid', 'B'], [[], 'q→(p→p)', 'valid', 'K*'], [[], 'q→(p→p)', 'invalid', 'B']] })
+  ]
+});
+})(window.CONTENT);
+
+/* Capítulo 11 · Lógicas difusas */
+(function (C) {
+const { T, Q, M, TT, V, table } = C;
+C.world({
+  ord: 11, num: '11', name: 'Bruma del Sorites', logic: 'Lógica difusa: Łukasiewicz continua y vaguedad', badge: '0,7',
+  intro: 'En la bruma los contornos se borran poco a poco. La verdad viene en grados, entre 0 y 1, y el modus ponens puede fallar. Aquí tampoco hay árboles: se razona con valores.',
+  stages: [
+    T('La paradoja del montón', [
+      { say: 'María tiene cinco años: es una niña. Un segundo no convierte a nadie en adulto, así que dentro de un segundo seguirá siendo niña; y un segundo después, también… Tras suficientes segundos habrán pasado treinta años, y María seguiría siendo niña. Absurdo.' },
+      { say: 'Es una <b>paradoja sorites</b> (del griego «soros», montón). Surge porque «niña» es <b>vago</b>: cambios muy pequeños no afectan a si se aplica. Casi todos los predicados son así: alto, rojo, borracho, montón… incluso muerto.' },
+      { say: 'El sorites es una cadena de modus ponens. Si Mᵢ es «María es niña tras i segundos», tenemos M₀, {M₀→M₁}, {M₁→M₂}… hasta Mₖ, que es claramente falso.' }
+    ]),
+    T('Respuestas', [
+      { say: 'Si todo es verdadero o falso, hay un último segundo de niñez, y ese condicional falla. Pero un salto brusco no cuadra con un cambio casi continuo. Los <b>epistemicistas</b> lo aceptan: el corte existe, solo que no podemos saber dónde.' },
+      { say: 'Su razón: conocer exige una base de evidencia, y dos situaciones indistinguibles darían el mismo conocimiento. Pero el problema no es solo no saber dónde está el corte; es que un segundo de vida no parece poder fundar la diferencia entre niña y adulta.', mood: 'think' },
+      { say: 'Otra salida: un tercer valor en la zona de penumbra, por ejemplo K3 con supervaluaciones. Pero entonces aparece un corte igual de raro entre lo verdadero y lo intermedio. Si el cambio es continuo, parece que la verdad debe cambiar de forma continua: por grados.' },
+      { say: 'Aun así, la lógica difusa tiene su propio problema: en algún punto la verdad pasa de ser completa a ser menos que completa. Ningún enfoque se libra del todo.' }
+    ]),
+    T('La lógica L de Łukasiewicz', [
+      { say: 'Los valores son todos los números reales entre 0 y 1: 1 es completamente verdadero, 0 completamente falso, 0,5 a medias. Las funciones de verdad:',
+        fig: table(['Conectiva', 'Valor'], [['{¬A}', '1 − a'], ['{A∧B}', 'el mínimo de a y b'], ['{A∨B}', 'el máximo de a y b'], ['{A→B}', '1 si a ≤ b; si no, 1 − a + b']]) },
+      { say: 'El condicional: si A no es más verdadera que B, vale 1. Si lo es, algo falla, y tanto más cuanto mayor la caída: pierde exactamente lo que cae. Con solo 1 y 0 todo es clásico; con 1, 0,5 y 0 es justo Ł3.' },
+      { say: '¿Qué valores aceptamos? Depende del contexto: una manzana 0,95 roja sirve. Cada umbral ε da una lógica. La lógica <b>L</b> exige que la inferencia funcione para <i>todo</i> umbral, y eso equivale a esto: nunca la conclusión vale menos que la menor de las premisas.' },
+      { say: 'Con finitas premisas, eso es lo mismo que la verdad lógica (valor 1) del condicional que va de la conjunción de premisas a la conclusión. La lógica con solo el 1 designado se llama Łℵ, y estudiarla basta para estudiar L.' }
+    ]),
+    TT('Cinco valores', 'Ł5', ['¬p', 'p∨¬p'], {
+      intro: 'Una muestra de cinco valores. {¬p} vale 1 − p; la disyunción, el máximo.',
+      outro: 'El tercio excluso nunca baja de 0,5, pero no siempre llega a 1.' }),
+    Q('Grados de verdad', [
+      { q: 'Si {p} vale 0,9 y {q} vale 0,6, ¿cuánto vale {p→q}?', opts: ['0,6', '0,7', '1'], ok: 1, why: 'p > q, así que vale 1 − 0,9 + 0,6 = 0,7.' },
+      { q: 'Y si {p} vale 0,4 y {q} vale 0,8, {p→q} vale…', opts: ['1', '0,4', '0,8'], ok: 0, why: 'El antecedente no es más verdadero que el consecuente.' },
+      { q: 'En L, una inferencia es válida si…', opts: ['las premisas valen 1 y la conclusión también', 'la conclusión nunca vale menos que la menor de las premisas', 'la conclusión vale al menos 0,5'], ok: 1, why: 'Es la caracterización por el mínimo (la cota inferior máxima).' }
+    ]),
+    M('Falla el modus ponens', 'Ł', ['p', 'p→q'], 'q', {
+      intro: 'Busca valores donde {q} quede por debajo del mínimo de las premisas.',
+      outro: 'Con {p} = 0,75 y {q} = 0,5, el condicional vale 0,75 y {q} solo 0,5: inválida en L.' }),
+    M('Sin explosión', 'Ł', ['p∧¬p'], 'q', {
+      outro: 'Con {p} = 0,5 la contradicción vale 0,5; basta {q} = 0 para refutarla. L es paraconsistente.' }),
+    M('Contracción', 'Ł', [], '(p→(p→q))→(p→q)', {
+      intro: 'Sin premisas, la fórmula tiene que valer menos que 1.',
+      outro: 'Por ejemplo, {p} = 0,75 y {q} = 0,25. Este axioma de R falla en L: L no es una sublógica de R.' }),
+    T('Axiomas y condicionales en L', [
+      { say: 'No hay árboles del tipo del libro para Łℵ. Se usa un sistema axiomático con el modus ponens como única regla. Es poco transparente, y probar su completitud es difícil.' },
+      { say: 'Más claro: L es casi la lógica relevante CK (B con A8, A9, A12 y A15). Le falta un axioma raro, A17: {((A→B)→B)→(A∨B)}. Y no valida A11, la contracción.' },
+      { say: 'Lo más llamativo: falla el modus ponens. Vale cuando las premisas son completamente verdaderas, pero no cuando la verdad baja. Y eso explica el sorites: con valores 1, 1, 1, 0,8, 0,6, 0,4, 0,2, 0, 0, 0, cada condicional vale al menos 0,8, así que todas las premisas son aceptables y la conclusión no.',
+        fig: table(['M₀', 'M₁', 'M₂', 'M₃', 'M₄', 'M₅', 'M₆', 'M₇', 'M₈', 'M₉'], [['1', '1', '1', '0,8', '0,6', '0,4', '0,2', '0', '0', '0']], { tight: true }) },
+      { say: 'L es paraconsistente: {A∧¬A} no implica {B}. Pero no es relevante: conserva casi todos los vicios del condicional material, como {A ⊢ B→A} y {¬A ⊢ A→B}.', mood: 'think' }
+    ]),
+    M('Transitividad', 'Ł', ['p→q', 'q→r'], 'p→r', {
+      outro: 'Inválida: con {p} = 1, {q} = 0,75 y {r} = 0,5, cada premisa vale 0,75 y la conclusión 0,5.' }),
+    T('Lógica difusa relevante', [
+      { say: 'L no es relevante, pero se puede «difuminar» una lógica relevante. En <b>FB</b> (B difusa), cada letra tiene un valor en [0, 1] en cada mundo, la negación usa la estrella, y {A→B} vale en w la menor caída sobre las tríadas Rwxy.' },
+      { say: 'La validez: en todo mundo normal, la menor de las premisas no supera a la conclusión. FB es relevante, y sus verdades lógicas son las de B. Pero, como en L, el modus ponens falla, y también la transitividad de los condicionales.' },
+      { say: 'Un apéndice del capítulo generaliza todo con las <b>t-normas</b>: operaciones que hacen de conjunción fuerte, y de las que sale el condicional. La de Łukasiewicz da L; la del mínimo da la lógica de Gödel; la del producto, la lógica del producto. Lo que valen todas es la lógica básica BL.' }
+    ]),
+    Q('Bruma', [
+      { q: '¿Qué tiene que ver la falla del modus ponens con el sorites?', opts: ['nada', 'el sorites es una cadena de modus ponens; si falla, la paradoja se disuelve', 'el sorites usa el silogismo disyuntivo'], ok: 1, why: 'Las premisas pueden ser aceptables sin que lo sea la conclusión.' },
+      { q: 'Con los valores 1, 0,5 y 0, la lógica L coincide con…', opts: ['K3', 'Ł3', 'LP'], ok: 1, why: 'Las tablas de Łukasiewicz continua, restringidas a esos tres valores, son las de Ł3.' },
+      { q: '¿Es L una lógica relevante?', opts: ['Sí', 'No'], ok: 1, why: 'Vale, por ejemplo, {A ⊢ B→A}.' },
+      { q: 'La t-norma del mínimo da…', opts: ['la lógica de Gödel', 'Łukasiewicz', 'la del producto'], ok: 0, why: 'Cada t-norma continua define una lógica con valores en [0, 1].' }
+    ]),
+    V('La máquina difusa', { mv: true, sys: ['Ł', 'Ł3', 'K3', 'CL'], syms: '¬∧∨→', goals: ['valid', 'invalid', 'gap'], cmp: 'CL',
+      intro: 'Para L, la máquina recorre una cuadrícula de valores de décimo en décimo: si encuentra un contraejemplo, es seguro; si no, es un buen indicio.',
+      outro: 'L comparte con el condicional material casi todas sus paradojas, pero no el modus ponens.',
+      ex: [[['p', 'p→q'], 'q', 'invalid', 'Ł'], [[], 'p→(q→p)', 'valid', 'Ł'], [['p∧¬p'], 'q', 'invalid', 'Ł'], [[], '(p→(p→q))→(p→q)', 'invalid', 'Ł'], [['(p∧q)→r'], '(p→r)∨(q→r)', 'valid', 'Ł'], [['p', 'p→q'], 'q', 'valid', 'Ł3']] })
+  ]
+});
+})(window.CONTENT);
+
+/* Apéndice 11a · Lógicas modales multivaluadas */
+(function (C) {
+const { T, Q, A, V, table, tab, rule, r } = C;
+C.world({
+  ord: 11.5, num: '11a', name: 'Jardín de Coral', logic: 'Lógicas modales multivaluadas: K_FDE, K_K3, K_LP y los futuros contingentes', badge: '□b',
+  intro: 'En el jardín de coral cada mundo tiene más de dos colores. Juntamos los mundos posibles con los cuatro valores de FDE, y volvemos a la batalla naval de Aristóteles.',
+  stages: [
+    T('Mundos con muchos valores', [
+      { say: 'En las lógicas modales usuales, cada mundo es bivalente. Pero nada obliga: los mundos pueden tener los valores de cualquier lógica multivaluada. Una interpretación es ⟨W, R, S, ν⟩, con S una estructura multivaluada y ν dando a cada letra un valor en cada mundo.' },
+      { say: 'Si los valores están ordenados, lo natural es: {□A} vale en w la <b>cota inferior máxima</b> de los valores de A en los mundos accesibles, y {◇A} la <b>cota superior mínima</b>. Es la versión multivaluada de «en todos» y «en alguno».' },
+      { say: 'La validez conserva los valores designados en todo mundo. Así sale K<sub>L</sub>, el análogo de K para la lógica L; con condiciones sobre R, sus extensiones. Por ejemplo, en la versión de Łukasiewicz continua valen la necesitación y {□(A→B)→(□A→□B)}, pero no {□A→A} sin reflexividad.' }
+    ]),
+    T('FDE modal', [
+      { say: 'Con FDE como base sale K<sub>FDE</sub>. Ignorando el valor n se obtiene K<sub>LP</sub>; ignorando b, K<sub>K3</sub>; ignorando los dos, la K clásica.' },
+      { say: 'En la versión relacional, las condiciones son naturales: {□A} es verdadera si A lo es en todos los accesibles, y falsa si A es falsa en alguno; {◇A} es verdadera si A lo es en alguno, y falsa si A es falsa en todos.',
+        fig: table(['', 'verdadera (ρ1) si…', 'falsa (ρ0) si…'], [['{□A}', 'A es verdadera en todo mundo accesible', 'A es falsa en algún mundo accesible'], ['{◇A}', 'A es verdadera en algún mundo accesible', 'A es falsa en todo mundo accesible']]) },
+      { say: 'K<sub>FDE</sub> y K<sub>K3</sub> no tienen verdades lógicas: un solo mundo que se ve a sí mismo, con todas las letras sin valor, lo impide. Y un dato curioso: K<sub>LP</sub> valida exactamente las mismas fórmulas que K.' }
+    ]),
+    T('Árboles modales con signo', [
+      { say: 'Se combinan los árboles de FDE con los de K. Los nodos son {A,+i}, {A,−i} o {irj}. Las reglas extensionales son las de FDE; las modales:',
+        fig: rule(r(['{□A,+i}', '{irj}'], [['{A,+j}']]), r(['{□A,−i}'], [['{irj}', '{A,−j}']], 'j nuevo'), r(['{◇A,+i}'], [['{irj}', '{A,+j}']], 'j nuevo'), r(['{◇A,−i}', '{irj}'], [['{A,−j}']])) },
+      { say: 'Y las reglas de conmutar: {¬□A,±i} da {◇¬A,±i}, y {¬◇A,±i} da {□¬A,±i}. Para K<sub>K3</sub> y K<sub>LP</sub> se añaden los cierres de K3 y de LP; para ρ, σ y τ, sus reglas de siempre.',
+        fig: tab('KFDE', ['□p∧¬□q'], '◇(p∧¬q)') }
+    ]),
+    A('Necesidad y no necesidad', 'KFDE', ['□p∧¬□q'], '◇(p∧¬q)', { outro: 'Válida en K_FDE.' }),
+    A('Sin modus ponens bajo la caja', 'KFDE', ['□(p⊃q)', '◇p'], '◇q', {
+      outro: 'Inválida en K_FDE: en el mundo 1, {p} es verdadera y falsa, así que {p⊃q} vale sin que {q} valga.' }),
+    A('Con exclusión', 'KK3', ['□(p⊃q)', '◇p'], '◇q', { outro: 'Válida en K_K3: sin excesos de verdad, el silogismo disyuntivo vuelve.' }),
+    A('Transitividad con tres valores', 'KK3τ', ['□p'], '□□p', { outro: 'Válida en K_K3 con τ.' }),
+    A('Reflexividad paraconsistente', 'KLPρ', ['□p'], 'p', { outro: 'Válida en K_LP con ρ.' }),
+    A('Sin verdades lógicas', 'KFDE', [], '□(p∨¬p)', { outro: 'Inválida en K_FDE: en un mundo con {p} sin valor, {p∨¬p} no es verdadera.' }),
+    A('Pero en K_LP sí', 'KLP', [], '□(p∨¬p)', { outro: 'Válida en K_LP: sin faltas, el tercio excluso vale en todo mundo.' }),
+    T('Futuros contingentes, otra vez', [
+      { say: 'Volvamos a Aristóteles (7.9). Si «mañana habrá una batalla naval» fuese verdadera hoy, sería necesaria; si fuese falsa, imposible. Como no es ni lo uno ni lo otro, no es verdadera ni falsa.' },
+      { say: 'Para modelarlo: K3 con R reflexiva y transitiva (wRv: v sale de w tras más acontecimientos) y una condición de <b>persistencia</b>: lo verdadero sigue verdadero, y lo falso sigue falso. Llamemos <b>A</b> (por Aristóteles) a esa lógica.' },
+      { say: 'En A, {p ⊢ □p} y {¬p ⊢ □¬p}: el argumento de Aristóteles funciona. Y {p∨¬p} puede fallar: hoy, en w0, {p} no tiene valor; mañana podría ser verdadera (w1) o falsa (w2). En los árboles, la persistencia es la regla «her.».' },
+      { say: 'Pero Aristóteles también dice que es <i>necesario</i> que haya o no haya batalla, aunque ninguna de las dos cosas sea necesaria: {□(p∨¬p)}, pero no {□p∨□¬p}. En A, {□(p∨¬p)} falla. Se arregla mirando «desde el final del tiempo»: {□A} vale si A vale en todos los mundos <b>completos</b> accesibles.', mood: 'think' }
+    ]),
+    A('Lo verdadero es inevitable', 'A', ['p'], '□p', {
+      intro: 'Usa ρ, τ y la persistencia (her.).',
+      outro: 'Válida en A: lo verdadero sigue siéndolo en todo futuro.' }),
+    A('El tercio excluso falla', 'A', [], 'p∨¬p', { outro: 'Inválida en A: hoy la batalla de mañana no es verdadera ni falsa.' }),
+    A('Ni siquiera necesariamente', 'A', [], '□(p∨¬p)', {
+      outro: 'Inválida en A. Por eso hace falta la variante con mundos completos para recoger todo lo que dice Aristóteles.' }),
+    Q('Coral', [
+      { q: 'En una lógica modal multivaluada ordenada, {□A} toma…', opts: ['el valor máximo de A en los accesibles', 'la cota inferior máxima de esos valores', 'siempre 1 o 0'], ok: 1, why: 'Es la generalización de «en todos los mundos accesibles».' },
+      { q: '¿Qué valida exactamente las mismas fórmulas que K?', opts: ['K_FDE', 'K_K3', 'K_LP'], ok: 2, why: 'Por monotonía: se puede resolver cada exceso hacia un lado sin cambiar lo que falla.' },
+      { q: 'En la lógica A, ¿qué vale?', opts: ['{p∨¬p}', '{p ⊢ □p}', '{□p∨□¬p}'], ok: 1, why: 'Por la persistencia, lo verdadero se mantiene en todo futuro.' }
+    ]),
+    A('Jefe del jardín', 'KLP', ['◇(p∧q)'], '◇p∧◇q', { boss: true,
+      outro: '¡Válida en K_LP!' }),
+    V('La máquina del coral', { sys: ['KFDE', 'KK3', 'KLP', 'A', 'K'], syms: '¬∧∨⊃□◇', goals: ['valid', 'invalid', 'split'],
+      intro: 'Árboles modales con signo. Compara K_FDE, K_K3, K_LP, la lógica A y la K clásica.',
+      outro: 'K_LP coincide con K en las fórmulas válidas, pero no en las inferencias.',
+      ex: [[['□(p⊃q)', '◇p'], '◇q', 'invalid', 'KFDE'], [['□(p⊃q)', '◇p'], '◇q', 'valid', 'KK3'], [[], '□(p∨¬p)', 'valid', 'KLP'], [[], '□(p∨¬p)', 'invalid', 'KFDE'], [['p'], '□p', 'valid', 'A'], [['p'], '□p', 'invalid', 'K']] })
+  ]
+});
+})(window.CONTENT);
+
+/* Capítulo 12 · Lógica clásica de primer orden */
+(function (C) {
+const { T, Q, A, V, table, tab, rule, r } = C;
+C.world({
+  ord: 12, num: '12', name: 'Alta Mar', logic: 'Lógica clásica de primer orden e identidad', badge: '∀',
+  intro: 'Comienza la segunda parte del libro: cuantificadores e identidad. En alta mar repasamos la lógica de primer orden clásica y sus árboles, que pueden no terminar nunca.',
+  stages: [
+    T('El lenguaje de primer orden', [
+      { say: 'El vocabulario: variables (x, y, z), constantes o nombres (a, b, c), predicados de n lugares (P, Q, S…), las conectivas de siempre y los cuantificadores {∀} (universal) y {∃} (particular).' },
+      { say: 'Una fórmula atómica es un predicado seguido de términos: {Pa}, {Sxy}. Si A es fórmula, también lo son {∀xA} y {∃xA}. Una variable está <b>ligada</b> si cae bajo un cuantificador con ella; si no, está libre. Las oraciones no tienen variables libres.' },
+      { say: 'Una interpretación es ⟨D, ν⟩: un dominio no vacío D y una función que da a cada nombre un objeto de D y a cada predicado de n lugares un conjunto de n-tuplas. {∀xA} es verdadera si A vale para todo objeto del dominio; {∃xA}, si vale para alguno.',
+        fig: table(['Fórmula', 'Verdadera si…'], [['{Pa}', 'el objeto que nombra a está en la extensión de P'], ['{∀xPx}', 'todo objeto está en la extensión de P'], ['{∃xPx}', 'algún objeto está en la extensión de P']]) },
+      { say: 'Cuatro equivalencias para recordar: {¬∃xA} con {∀x¬A}; {¬∀xA} con {∃x¬A}; {¬∃x(Px∧A)} con {∀x(Px⊃¬A)}; {¬∀x(Px⊃A)} con {∃x(Px∧¬A)}.' }
+    ]),
+    Q('Cuantificar', [
+      { q: '«Todos los peces nadan», con F: pez y N: nada, es…', opts: ['{∀x(Fx∧Nx)}', '{∀x(Fx⊃Nx)}', '{∃x(Fx⊃Nx)}'], ok: 1, why: 'El universal va con el condicional: de todo lo que sea pez, se dice que nada.' },
+      { q: '«Algún pez vuela» es…', opts: ['{∃x(Fx∧Vx)}', '{∃x(Fx⊃Vx)}', '{∀x(Fx∧Vx)}'], ok: 0, why: 'El particular va con la conjunción.' },
+      { q: '{¬∀xPx} equivale a…', opts: ['{∀x¬Px}', '{∃x¬Px}', '{¬∃xPx}'], ok: 1, why: 'No todo es P si y solo si algo no es P.' }
+    ]),
+    T('Árboles con cuantificadores', [
+      { say: 'Los árboles de primer orden son los clásicos con cuatro reglas nuevas. Las de las negaciones convierten un cuantificador en el otro. Las de <b>instanciación</b> universal (IU) y particular (IP):',
+        fig: rule(r(['{¬∀xA}'], [['{∃x¬A}']]), r(['{¬∃xA}'], [['{∀x¬A}']]), r(['{∀xA}'], [['{A(a)}']], 'a: cualquier nombre de la rama'), r(['{∃xA}'], [['{A(c)}']], 'c: un nombre nuevo')) },
+      { say: 'Para {∃xA} hace falta un nombre <b>nuevo</b>: no sabemos qué objeto es, así que no podemos suponer que es uno de los ya nombrados. Para {∀xA}, en cambio, se usa cada nombre de la rama (si no hay ninguno, se inventa uno). Una línea con {∀} nunca se da por terminada: puede aparecer otro nombre.' },
+      { say: 'Las reglas se aplican a líneas enteras, no a trozos. Y conviene instanciar primero los particulares (que traen nombres nuevos) y después los universales.',
+        fig: tab('FOL', ['∀x(Px⊃Qx)', '∀x(Qx⊃Sx)'], '∀x(Px⊃Sx)') }
+    ]),
+    A('Silogismo', 'FOL', ['∀x(Px⊃Qx)', '∀x(Qx⊃Sx)'], '∀x(Px⊃Sx)', {
+      intro: 'Empieza por la conclusión negada: {¬∀x} se vuelve {∃x¬}, y el particular trae un nombre nuevo.',
+      outro: 'Válida: el silogismo clásico en Barbara.' }),
+    A('Del todo a la parte', 'FOL', [], '∀xPx⊃∃xPx', {
+      outro: 'Válida en la lógica clásica, porque el dominio nunca está vacío. Lo discutiremos en el capítulo 13.' }),
+    A('Un particular que no basta', 'FOL', ['∃x(Px⊃Qx)'], '∀x¬Qx', {
+      outro: 'Inválida. En el contramodelo hay dos objetos, y uno es Q.' }),
+    T('Contramodelos de primer orden', [
+      { say: 'De una rama abierta se lee una interpretación: un objeto por cada nombre de la rama; {Pa} en la rama pone ese objeto en la extensión de P; lo que no aparece, fuera. Cada objeto tiene nombre, así que para comprobar {∃xA} basta mirar los nombres de la rama.' },
+      { say: 'Pero los árboles de primer orden pueden ser <b>infinitos</b>. Con {∃x∀ySxy} negado, cada nombre nuevo obliga a volver a la universal, que trae otro particular, que trae otro nombre… El contramodelo leído sería infinito.', mood: 'think' },
+      { say: 'Muchas veces hay un contramodelo finito que se encuentra a ojo. Pero no siempre: la validez de primer orden no es <b>decidible</b> (es el teorema de Church). Los árboles siempre se cierran si la inferencia es válida, pero si no lo es pueden no terminar.' },
+      { say: 'En el juego: si una rama nunca termina pero el modelo que se lee de ella ya refuta la inferencia, puedes declararla abierta y lo acepto.' }
+    ]),
+    A('Intercambiar cuantificadores', 'FOL', ['∃y∀xSxy'], '∀x∃ySxy', { outro: 'Válida: si alguien es amado por todos, todos aman a alguien.' }),
+    A('Disyunción de universales', 'FOL', ['∀xPx∨∀xQx'], '∀x(Px∨Qx)', { outro: 'Válida en este sentido.' }),
+    A('La disyunción no se distribuye', 'FOL', ['∀x(Px∨Qx)'], '∀xPx∨∀xQx', {
+      outro: 'Inválida: basta un objeto que sea solo P y otro que sea solo Q.' }),
+    T('Identidad', [
+      { say: 'La identidad es un predicado de dos lugares que se escribe en medio: {a=b}. En toda interpretación, su extensión son los pares ⟨d, d⟩: cada objeto es idéntico a sí mismo y a nada más.' },
+      { say: 'Reglas: siempre se puede añadir {a=a}; y la <b>sustitución de idénticos</b> (SI): de {a=b} y una atómica con a, pasa a la misma con b en algunas de las apariciones. En la práctica: se cierra con {¬a=a}, o con {a=b} y {¬b=a}, y se aplica SI en los dos sentidos.',
+        fig: rule(r(['·'], [['{a=a}']]), r(['{a=b}', '{A(a)}'], [['{A(b)}']], 'A atómica')) },
+      { say: 'En el juego, SI está en el panel de la derecha. Al leer un contramodelo, los nombres unidos por identidades denotan el mismo objeto.',
+        fig: tab('FOL', [], 'a=b⊃(∃xSxa⊃(a=a∧∃xSxb))') }
+    ]),
+    A('Sustituir idénticos', 'FOL', ['a=b', 'Pa'], 'Pb', { outro: 'Válida: es la sustitución de idénticos.' }),
+    A('Simetría', 'FOL', ['a=b'], 'b=a', { outro: 'Válida.' }),
+    A('Con un particular', 'FOL', [], 'a=b⊃(∃xSxa⊃(a=a∧∃xSxb))', { outro: 'Válida: el ejemplo del libro.' }),
+    A('Alguien igual a cada uno', 'FOL', ['a=b'], '∀x∃y(Py∧x=y)', {
+      outro: 'Inválida: nada obliga a que algo sea P.' }),
+    T('Problemas filosóficos', [
+      { say: 'Se suele leer {∃x} como «existe un x tal que». Como el dominio no puede estar vacío, {∃x(A∨¬A)} es una verdad lógica: que algo existe sería verdad de lógica. No lo parece: podría no haber habido nada.' },
+      { say: 'Además, todo nombre denota, así que vale {A(a) ⊢ ∃xA}. Pero «Pegaso no existe» parece verdadero, y «existe algo que no existe» es falso. Y hay casos sin «existe»: «Sherlock Holmes es un personaje de ficción», «estoy pensando en Sherlock Holmes».' },
+      { say: 'También vale la sustitución de idénticos en general. Contraejemplos aparentes: «a» es la primera letra del alfabeto (pero ahí se habla de la letra, no de a). Más duro: un bebé en una foto y una adulta en otra son la misma persona; la adulta no es un bebé. Habría que añadir el tiempo.' },
+      { say: 'Y los contextos intencionales: sé que George Eliot fue novelista, pero no sabía que Mary Anne Evans lo fuera, aunque son la misma persona. Volveremos a todo esto en los próximos capítulos.', mood: 'think' }
+    ]),
+    Q('Primer orden', [
+      { q: '¿Por qué {∃x(Px∨¬Px)} es válida en la lógica clásica?', opts: ['porque todo es P', 'porque el dominio no puede estar vacío', 'por la identidad'], ok: 1, why: 'Siempre hay al menos un objeto, y cumple {Px∨¬Px}.' },
+      { q: 'En la regla del particular, el nombre debe ser…', opts: ['cualquiera de la rama', 'nuevo en la rama', 'a'], ok: 1, why: 'No sabemos qué objeto es: no podemos suponer que ya tiene nombre.' },
+      { q: 'Que los árboles de primer orden puedan no terminar se relaciona con…', opts: ['el teorema de Church', 'la compacidad', 'el teorema de Gödel sobre la completitud'], ok: 0, why: 'La validez de primer orden no es decidible.' },
+      { q: 'El caso de George Eliot y Mary Anne Evans pone en duda…', opts: ['la sustitución de idénticos', 'la universal', 'el tercio excluso'], ok: 0, why: 'En contextos de conocimiento o pensamiento, sustituir nombres de lo mismo puede cambiar el valor de verdad.' }
+    ]),
+    A('Jefe de alta mar', 'FOL', ['∀x(Px⊃∃yQxy)', '∀x∀y(Qxy⊃Sy)', 'Pa'], '∃xSx', { boss: true,
+      intro: 'Tres premisas y un particular escondido.',
+      outro: '¡Válida!' }),
+    V('La máquina de primer orden', { sys: ['FOL'], syms: '¬∧∨⊃≡∀∃=', goals: ['valid', 'invalid', 'own'],
+      intro: 'La máquina instancia cuantificadores y aplica la identidad. Si el árbol crece sin fin, te avisará.',
+      outro: 'Los árboles de primer orden son completos, pero no deciden: la validez de primer orden es indecidible.',
+      ex: [[['∀x(Px⊃Qx)', 'Pa'], 'Qa', 'valid'], [['∃xPx', '∃xQx'], '∃x(Px∧Qx)', 'invalid'], [['∀x∃yRxy'], '∃y∀xRxy', 'unknown'], [['a=b', 'Pa'], 'Pb', 'valid'], [[], '∃x(Px∨¬Px)', 'valid'], [['∀x(Px∨Qx)'], '∀xPx∨∀xQx', 'invalid']] })
+  ]
+});
+})(window.CONTENT);
+
+/* Capítulo 13 · Lógicas libres */
+(function (C) {
+const { T, Q, A, V, table, tab, rule, r } = C;
+C.world({
+  ord: 13, num: '13', name: 'Islote de lo Inexistente', logic: 'Lógicas libres: positiva, negativa; existencia e identidad', badge: 'E',
+  intro: 'En el islote se ven siluetas de animales que no están. Las lógicas libres admiten nombres sin un objeto existente detrás, y cuantifican solo sobre lo que existe.',
+  stages: [
+    T('Libres de supuestos existenciales', [
+      { say: 'Las <b>lógicas libres</b> se libran de dos supuestos de la clásica: que algo existe y que todo nombre nombra algo existente. Se añade un predicado de existencia, {E}: {Ea} se lee «a existe».' },
+      { say: 'Una interpretación es ⟨D, E, ν⟩: D es el conjunto de todos los objetos (Sherlock Holmes, Pegaso, Julio César) y E ⊆ D, el <b>dominio interior</b>, el de los que existen (solo César). E puede estar vacío. Los nombres denotan en D.' },
+      { say: 'Los cuantificadores recorren solo E: {∀xA} es verdadera si A vale para todo objeto existente; {∃xA}, si vale para alguno. Lo demás, como en la clásica.' }
+    ]),
+    T('Árboles libres', [
+      { say: 'Cambian las dos reglas de instanciación. El universal ya no da directamente A(a): o bien a no existe, o bien vale A(a). El particular trae un nombre nuevo <b>y</b> su existencia.',
+        fig: rule(r(['{∀xA}'], [['{¬Ea}'], ['{A(a)}']], 'a: cualquier nombre de la rama'), r(['{∃xA}'], [['{Ec}', '{A(c)}']], 'c nuevo')) },
+      { say: 'El contramodelo se lee como en la clásica, con E igual a los nombres a para los que {Ea} está en la rama.',
+        fig: tab('FREE', ['∀xPx', '∃xQx'], '∃x(Px∧Qx)') }
+    ]),
+    A('Lo que existe, cuenta', 'FREE', ['∀xPx', '∃xQx'], '∃x(Px∧Qx)', {
+      intro: 'Cada aplicación del universal abre dos ramas: elige el nombre {c} que trajo el particular.',
+      outro: 'Válida en la lógica libre.' }),
+    A('Sin generalización', 'FREE', ['Pa'], '∃xPx', {
+      outro: 'Inválida: a puede no existir. Pegaso tiene alas, pero no existe nada con alas que sea Pegaso.' }),
+    A('Nada obliga a existir', 'FREE', [], '∃x(Px∨¬Px)', { outro: 'Inválida: el dominio interior puede estar vacío.' }),
+    A('Del todo a lo existente', 'FREE', ['∀xPx', 'Ea'], 'Pa', { outro: 'Válida: si a existe, el universal lo alcanza.' }),
+    A('Del todo a la parte', 'FREE', [], '∀xPx⊃∃xPx', { outro: 'Inválida en la lógica libre, a diferencia de la clásica.' }),
+    T('Positivas y negativas', [
+      { say: 'Con estas reglas, un objeto inexistente puede tener propiedades positivas: {¬Ea∧Pa} es satisfacible. Son las lógicas libres <b>positivas</b>. A algunos les parece raro: no se puede patear ni ver lo que no existe.' },
+      { say: 'Las <b>negativas</b> imponen la <b>restricción de negatividad</b>: si ⟨d₁…dₙ⟩ está en la extensión de un predicado, todos esos objetos existen. En los árboles es la regla NCR: de {Pa₁…aₙ} pasa a {Ea₁}, …, {Eaₙ}.' },
+      { say: 'Con ella vuelve una forma de generalización: {Pa ⊢ ∃xPx}. Pero hay contraejemplos aparentes: «estoy pensando en Sherlock Holmes», «Homero adoraba a Zeus». Y las <b>neutras</b>, que dejan sin valor las atómicas con nombres vacíos, necesitan faltas de valor (capítulo 21).', mood: 'think' }
+    ]),
+    A('Generalizar en la negativa', 'NFREE', ['Pa'], '∃xPx', {
+      intro: 'Aplica la regla <b>NCR</b> del panel.',
+      outro: 'Válida en la lógica libre negativa: lo que tiene propiedades existe.' }),
+    A('Lo que no se exige', 'NFREE', [], '(Qab∧¬Sac)⊃Ec', {
+      outro: 'Inválida: la NCR da {Ea} y {Eb}, pero nada dice de c, que solo aparece negado.' }),
+    T('Existir y ser', [
+      { say: 'Estas lógicas tienen nombres de inexistentes pero no dejan cuantificar sobre ellos. Se pueden añadir <b>cuantificadores exteriores</b>, que recorren todo D, como los clásicos, y leerlos «algo es tal que…», no «existe algo tal que…».' },
+      { say: 'Frege y Russell leían {∃} como «existe», y Quine lo hizo definición: «ser es ser el valor de una variable». Pero el castellano no siempre carga existencia: si soñé con un monstruo la semana pasada y anoche, «soñé dos veces con algo» es verdad.' },
+      { say: 'Un argumento clásico dice que «existe» no es un predicado genuino. Tomado en serio, también afectaría a las lógicas libres. Y los cuantificadores interiores se definen con los exteriores: {∃ᴱxA} es {∃x(Ex∧A)}.' }
+    ]),
+    T('Identidad en la lógica libre', [
+      { say: 'Lo más simple: la identidad como en la clásica, para todo D. Pero en una lógica negativa hay que aplicarle la restricción: {a=b} es falsa si a o b no existen, incluso {a=a}.' },
+      { say: 'Entonces la primera regla de identidad cambia: de {Ea} se pasa a {a=a} (autoidentidad de lo existente, SIE). La sustitución SI sigue igual. Ya no se cierra con {¬a=a} sola: hace falta también {Ea}.' },
+      { say: 'Más contraejemplos: parece falso que Sherlock Holmes = Pegaso, pero verdadero que Papá Noel = Santa Claus. Y la sustitución de idénticos sigue valiendo, así que la lógica libre no resuelve los problemas de George Eliot.' }
+    ]),
+    A('Lo inexistente no es idéntico', 'NFREE', ['¬Ea'], '¬a=b', { outro: 'Válida en la lógica libre negativa.' }),
+    A('Ni a sí mismo', 'NFREE', [], '(Ea∨a=a)∧(¬Ea∨a=a)', {
+      outro: 'Inválida en la negativa: si a no existe, {a=a} es falsa y falla la primera conjunta.' }),
+    A('En la positiva sí', 'FREE', [], '(Ea∨a=a)∧(¬Ea∨a=a)', { outro: 'Válida en la positiva: {a=a} vale siempre.' }),
+    Q('Inexistentes', [
+      { q: 'En la lógica libre, los cuantificadores recorren…', opts: ['todo D', 'solo los objetos existentes', 'solo los nombrados'], ok: 1, why: 'El dominio interior, E.' },
+      { q: '¿Cuál es la regla característica de las libres negativas?', opts: ['NCR: de {Pa} pasa a {Ea}', 'SI', 'la del particular'], ok: 0, why: 'Lo que tiene propiedades positivas existe.' },
+      { q: 'Con cuantificadores exteriores, {∃xA} se lee mejor…', opts: ['«existe un x tal que A»', '«algo es tal que A»', '«todo es A»'], ok: 1, why: 'Recorren también lo que no existe.' },
+      { q: 'En una lógica libre negativa con identidad, {a=a} es falsa cuando…', opts: ['nunca', 'a no existe', 'a=b'], ok: 1, why: 'La restricción de negatividad se aplica también a la identidad.' }
+    ]),
+    A('Jefe del islote', 'FREE', ['∀x(Px⊃Qx)', '∃xPx'], '∃xQx', { boss: true, outro: '¡Válida en la lógica libre!' }),
+    V('La máquina libre', { sys: ['FREE', 'NFREE', 'FOL'], syms: '¬∧∨⊃∀∃=', goals: ['valid', 'invalid', 'gap'], cmp: 'FOL',
+      intro: 'Escribe {E} para la existencia. Busca una inferencia clásica que falle en la lógica libre.',
+      outro: 'Sin E en las fórmulas, todo lo válido en la libre es válido en la clásica.',
+      ex: [[['Pa'], '∃xPx', 'invalid', 'FREE'], [['Pa'], '∃xPx', 'valid', 'NFREE'], [[], '∃x(Px∨¬Px)', 'invalid', 'FREE'], [['∀xPx', 'Ea'], 'Pa', 'valid', 'FREE'], [[], '∀xPx⊃∃xPx', 'invalid', 'FREE'], [['¬Ea'], '¬a=b', 'valid', 'NFREE']] })
   ]
 });
 })(window.CONTENT);
@@ -3739,7 +4070,7 @@ function paletteTree() {
       <button class="btn${canClose && !off ? ' lit' : ''}" data-act="tclose" ${off}>Cerrar ×</button>
       <button class="btn${tip && !off ? ' lit' : ''}" data-act="topen" ${off}>Abierta ${ico('↑')}</button>
     </div>
-    ${structs.length ? `<div class="mlabel">${t.sys.id === 'FOL' || t.sys.id === 'FREE' ? 'IDENTIDAD' : 'RELACIÓN Y OTRAS'}</div><div class="rules">${structs.map(rid => {
+    ${structs.length ? `<div class="mlabel">${t.sys.fo && !t.sys.W ? 'IDENTIDAD Y EXISTENCIA' : 'RELACIÓN Y OTRAS'}</div><div class="rules">${structs.map(rid => {
       const lit = !off && t.structPending(rid).length > 0;
       return `<button class="rbtn${lit ? ' lit' : ''}" data-act="tstruct" data-r="${rid}" title="${esc(TB.STRUCT[rid].name + ': ' + TB.STRUCT[rid].desc)}" ${off}>${raw(rid === 'her' ? 'her.' : rid)}</button>`;
     }).join('')}</div>` : ''}
@@ -3894,6 +4225,7 @@ function modelHTML(sys, M, prem, concl) {
     });
     const R = sys.md === 'U' || sys.cond ? [] : M.R;
     body = modelDiagram({ W: M.W, R, RA: M.RA, lits, nn: M.W.filter(w => !M.normal.includes(w)), root: '0', names: Object.fromEntries(M.W.map(w => [w, worldName(w)])), star: sys.neg === 'star' })
+      + (sys.fo ? `<p class="cap">Dominio: un objeto por nombre, <b>{${M.dom.join(', ')}}</b>.${sys.fo === 'var' ? ' Lo que existe en cada mundo está marcado con E.' : ' Es el mismo en todos los mundos.'}</p>` : '')
       + (M.R3 && M.R3.length ? `<p class="cap">Relación ternaria: ${M.R3.map(t => 'R(' + t.map(worldName).join(', ') + ')').join(' · ')}; además, R(w0, x, x) para todo x.</p>` : '')
       + `<p class="cap">${(sys.md === 'U' || sys.cond) && !sys.tern ? 'Todos los mundos se ven entre sí. ' : ''}${M.W.some(w => !M.normal.includes(w)) ? 'Con borde punteado: mundos no normales. ' : ''}${sys.neg === 'star' ? 'w0* es el mundo estrella de w0. ' : ''}Lo que no figura en un mundo es falso allí${sys.sg && !sys.int ? ' (o «no verdadero»)' : ''}.</p>`;
   }
@@ -4029,7 +4361,8 @@ const GOALTXT = {
 };
 const argKey = (prem, concl) => prem.map(L.str).sort().join(',') + '⊢' + L.str(concl);
 const labEx = e => ({ prem: e[0].map(L.parse), concl: L.parse(e[1]), sys: e[3] });
-const isMV = id => !TB.SYS[id] && !!SEM.MV[id];
+/* en la máquina de un capítulo de tablas (mv: true) se usan las tablas aunque el sistema también tenga árboles */
+const isMV = id => !!SEM.MV[id] && (!TB.SYS[id] || !!(ST && ST.stage && ST.stage.mv));
 function scrLab() {
   const s = ST.stage, off = ST.busy ? 'disabled' : '';
   const sysSel = `<span class="sysset">${s.sys.map(x => `<button class="btn sm${x === ST.sys ? ' on' : ''}" data-act="vsys" data-x="${esc(x)}" aria-pressed="${x === ST.sys}" title="${esc(sysName(x))}" ${off}>${esc(x)}</button>`).join('')}</span>`;

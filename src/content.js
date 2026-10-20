@@ -58,8 +58,8 @@ function RULEBOOK(sys) {
       add('¬>', 'Condicional negado', sys.cond === 'C+' ? '{¬(A>B), i} da {irₐj}, {A, j} y {¬B, j}, con j nuevo.' : '{¬(A>B), i} da {irₐj} y {¬B, j}, con j nuevo.');
     }
     if (sys.fo) {
-      add('∀', 'Universal', sys.fo === 'cl' ? '{∀xA} da {A(a)} para cada nombre a de la rama (si no hay ninguno, se inventa uno).' : '{∀xA} junto a {Ea} da {A(a)}.');
-      add('∃', 'Particular', sys.fo === 'cl' ? '{∃xA} da {A(c)} con un nombre c nuevo.' : '{∃xA} da {Ec} y {A(c)}, con c nuevo.');
+      add('∀', 'Universal', sys.fo === 'cl' ? '{∀xA} da {A(a)} para cada nombre a de la rama (si no hay ninguno, se inventa uno).' : sys.fo === 'free' ? '{∀xA} abre {¬Ea} | {A(a)}, para cada nombre a de la rama (uno nuevo si no hay ninguno).' : '{∀xA, i} abre {¬Ea, i} | {A(a), i}, para cada nombre a de la rama.');
+      add('∃', 'Particular', sys.fo === 'cl' ? '{∃xA} da {A(c)} con un nombre c nuevo.' : '{∃xA} da {Ec} y {A(c)} (en el mismo mundo), con c nuevo.');
       add('¬∀', 'Universal negado', '{¬∀xA} da {∃x¬A}.');
       add('¬∃', 'Particular negado', '{¬∃xA} da {∀x¬A}.');
     }

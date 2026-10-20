@@ -451,7 +451,7 @@ function paletteTree() {
       <button class="btn${canClose && !off ? ' lit' : ''}" data-act="tclose" ${off}>Cerrar ×</button>
       <button class="btn${tip && !off ? ' lit' : ''}" data-act="topen" ${off}>Abierta ${ico('↑')}</button>
     </div>
-    ${structs.length ? `<div class="mlabel">${t.sys.id === 'FOL' || t.sys.id === 'FREE' ? 'IDENTIDAD' : 'RELACIÓN Y OTRAS'}</div><div class="rules">${structs.map(rid => {
+    ${structs.length ? `<div class="mlabel">${t.sys.fo && !t.sys.W ? 'IDENTIDAD Y EXISTENCIA' : 'RELACIÓN Y OTRAS'}</div><div class="rules">${structs.map(rid => {
       const lit = !off && t.structPending(rid).length > 0;
       return `<button class="rbtn${lit ? ' lit' : ''}" data-act="tstruct" data-r="${rid}" title="${esc(TB.STRUCT[rid].name + ': ' + TB.STRUCT[rid].desc)}" ${off}>${raw(rid === 'her' ? 'her.' : rid)}</button>`;
     }).join('')}</div>` : ''}
@@ -606,6 +606,7 @@ function modelHTML(sys, M, prem, concl) {
     });
     const R = sys.md === 'U' || sys.cond ? [] : M.R;
     body = modelDiagram({ W: M.W, R, RA: M.RA, lits, nn: M.W.filter(w => !M.normal.includes(w)), root: '0', names: Object.fromEntries(M.W.map(w => [w, worldName(w)])), star: sys.neg === 'star' })
+      + (sys.fo ? `<p class="cap">Dominio: un objeto por nombre, <b>{${M.dom.join(', ')}}</b>.${sys.fo === 'var' ? ' Lo que existe en cada mundo está marcado con E.' : ' Es el mismo en todos los mundos.'}</p>` : '')
       + (M.R3 && M.R3.length ? `<p class="cap">Relación ternaria: ${M.R3.map(t => 'R(' + t.map(worldName).join(', ') + ')').join(' · ')}; además, R(w0, x, x) para todo x.</p>` : '')
       + `<p class="cap">${(sys.md === 'U' || sys.cond) && !sys.tern ? 'Todos los mundos se ven entre sí. ' : ''}${M.W.some(w => !M.normal.includes(w)) ? 'Con borde punteado: mundos no normales. ' : ''}${sys.neg === 'star' ? 'w0* es el mundo estrella de w0. ' : ''}Lo que no figura en un mundo es falso allí${sys.sg && !sys.int ? ' (o «no verdadero»)' : ''}.</p>`;
   }
