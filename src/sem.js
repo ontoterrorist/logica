@@ -1,0 +1,76 @@
+/* Lógica por Árboles — semánticas por tablas: clásica, K3, Ł3, LP, RM3, FDE (cuatro valores) y Łukasiewicz
+   con cinco valores (capítulos 7, 8 y 11). Un valor es un número entre 0 y 1; en FDE, una de las cadenas
+   '1', 'b', 'n', '0'. */
+(function (root) {
+'use strict';
+const L = root.Logic;
+
+const K3T = { not: a => 1 - a, and: Math.min, or: Math.max, imp: (a, b) => Math.max(1 - a, b) };
+const LUK = Object.assign({}, K3T, { imp: (a, b) => Math.min(1, 1 - a + b) });
+const RM3T = Object.assign({}, K3T, { imp: (a, b) => (a <= b ? Math.max(1 - a, b) : 0) });
+const MV = {
+  CL: { name: 'Lógica clásica', vals: [1, 0], des: [1], ops: K3T },
+  K3: { name: 'K3 (Kleene)', vals: [1, 0.5, 0], des: [1], ops: K3T },
+  'Ł3': { name: 'Ł3 (Łukasiewicz)', vals: [1, 0.5, 0], des: [1], ops: LUK },
+  LP: { name: 'LP (lógica de la paradoja)', vals: [1, 0.5, 0], des: [1, 0.5], ops: K3T },
+  RM3: { name: 'RM3', vals: [1, 0.5, 0], des: [1, 0.5], ops: RM3T },
+  'Ł5': { name: 'Łukasiewicz con cinco valores', vals: [1, 0.75, 0.5, 0.25, 0], des: [1], ops: LUK },
+  FDE: { name: 'FDE (cuatro valores)', vals: ['1', 'b', 'n', '0'], des: ['1', 'b'], four: true }
+};
+/* FDE: cada valor es un par (verdadera, falsa) */
+const TF = { '1': [1, 0], b: [1, 1], n: [0, 0], '0': [0, 1] };
+const ofTF = (t, f) => (t ? (f ? 'b' : '1') : (f ? '0' : 'n'));
+function ev4(f, v) {
+  switch (f.t) {
+    case 'atom': return v[f.p];
+    case 'not': { const [t, fa] = TF[ev4(f.a, v)]; return ofTF(fa, t); }
+    case 'and': { const a = TF[ev4(f.a, v)], b = TF[ev4(f.b, v)]; return ofTF(a[0] && b[0], a[1] || b[1]); }
+    case 'or': { const a = TF[ev4(f.a, v)], b = TF[ev4(f.b, v)]; return ofTF(a[0] || b[0], a[1] && b[1]); }
+    case 'imp': return ev4(L.Bin('or', L.Not(f.a), f.b), v);
+    case 'iff': return ev4(L.Bin('and', L.Bin('imp', f.a, f.b), L.Bin('imp', f.b, f.a)), v);
+    default: L.fail('Esa conectiva no tiene tabla aquí.');
+  }
+}
+function evMV(sys, f, v) {
+  const S = MV[sys];
+  if (S.four) return ev4(f, v);
+  const o = S.ops, e = g => evMV(sys, g, v);
+  switch (f.t) {
+    case 'atom': return v[f.p];
+    case 'not': return o.not(e(f.a));
+    case 'and': return o.and(e(f.a), e(f.b));
+    case 'or': return o.or(e(f.a), e(f.b));
+    case 'imp': case 'arr': return o.imp(e(f.a), e(f.b));
+    case 'iff': return Math.min(o.imp(e(f.a), e(f.b)), o.imp(e(f.b), e(f.a)));
+    default: L.fail('Esa conectiva no tiene tabla aquí.');
+  }
+}
+const designated = (sys, x) => MV[sys].des.includes(x);
+/* todas las valuaciones de unas letras */
+function valuations(sys, atoms) {
+  const vals = MV[sys].vals, out = [];
+  const go = (i, v) => { if (i === atoms.length) { out.push(Object.assign({}, v)); return; } vals.forEach(x => { v[atoms[i]] = x; go(i + 1, v); }); };
+  go(0, {});
+  return out;
+}
+/* validez por tablas: devuelve el primer contraejemplo, si lo hay */
+function checkMV(sys, prem, concl) {
+  const atoms = L.atomsOf([...prem, concl]);
+  if (Math.pow(MV[sys].vals.length, atoms.length) > 4000) return { v: 'unknown', how: 'big' };
+  const rows = valuations(sys, atoms);
+  for (const v of rows) {
+    if (prem.every(f => designated(sys, evMV(sys, f, v))) && !designated(sys, evMV(sys, concl, v))) return { v: 'invalid', model: { kind: 'val', atoms, vals: v }, rows: rows.length };
+  }
+  return { v: 'valid', how: 'table', rows: rows.length };
+}
+/* nombre visible de un valor */
+function vname(sys, x) {
+  if (MV[sys].four) return x === 'b' ? 'b' : x === 'n' ? 'n' : x;
+  if (x === 1) return '1';
+  if (x === 0) return '0';
+  if (MV[sys].vals.length === 3) return 'i';
+  return String(x).replace('0.', ',').replace(',', '0,');
+}
+
+root.Sem = { MV, evMV, ev4, designated, valuations, checkMV, vname };
+})(typeof window !== 'undefined' ? window : globalThis);
