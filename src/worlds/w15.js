@@ -37,8 +37,9 @@ C.world({
     T('¿Se existe en más de un mundo?', [
       { say: 'Hay quien dice que ningún objeto concreto existe en más de un mundo: como nada está en dos lugares, nada estaría en dos mundos. O: si a, aquí, es rojo, y b, allá, no lo es, por sustitución de idénticos a ≠ b.' },
       { say: 'Con la restricción de negatividad eso lleva a un fatalismo: si a solo existe aquí, {Pa} es falsa en todo otro mundo, y lo único posible sería lo que de hecho es. David Lewis lo evitó con <b>contrapartes</b>: lo que es posible para a lo es para algo suficientemente parecido a a en otro mundo.' },
-      { say: 'Las contrapartes no tienen por qué ser únicas, ni existir, ni la relación ser simétrica o transitiva. Y hay una objeción famosa de Kripke: cuando digo que Humphrey podría haber ganado, hablo de Humphrey, no de alguien parecido a él.', mood: 'think' },
-      { say: 'Otro asunto: el cuantificador particular y la existencia. Con cuantificadores exteriores, que recorren todo D, se puede decir «hay algo que no existe aquí pero existe en otro mundo», sin contradicción.' }
+      { say: 'Pero las contrapartes no tienen por qué ser únicas, ni existir, ni la relación ser simétrica o transitiva, y eso desordena la lógica modal: incluso en VKυ fallaría {□Pa⊃□□Pa}. Por suerte, los argumentos contra existir en varios mundos se pueden resistir: las propiedades pueden indexarse a mundos, y los mundos se parecen más a tiempos que a lugares.', mood: 'think' },
+      { say: 'Queda el problema de la <b>identidad transmundana</b>: ¿qué hace que algo sea lo mismo en dos mundos, si no hay continuidad causal entre ellos? Una respuesta: propiedades esenciales que lo identifican, las <b>haecceidades</b>, como la de ser idéntico a a.' },
+      { say: 'Último punto: la semántica de dominios variables obliga a cuantificar sobre meros posibles, cosas que no existen aquí. Si los cuantificadores no cargan existencia, da casi lo mismo un dominio constante con un predicado E. Incluso quien, como Lewis, lee el particular como «existe», cuantifica sobre objetos de otros mundos.' }
     ]),
     Q('Dominios variables', [
       { q: 'En VK, la fórmula de Barcan…', opts: ['vale', 'falla', 'vale solo en VS5'], ok: 1, why: 'Falla incluso en VS5.' },

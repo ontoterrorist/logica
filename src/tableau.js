@@ -64,6 +64,13 @@ def('CB', 'CB', { W: 1, sg: 1, neg: 'star', imp: 'def', arr: 'B', tern: 1, cond:
 def('CB+', 'CB⁺', { W: 1, sg: 1, neg: 'star', imp: 'def', arr: 'B', tern: 1, cond: 'C+' });
 def('FOL', 'Primer orden clásica', { fo: 'cl', id: 1 });
 def('CK', 'CK (dominio constante)', { W: 1, md: 'K', fo: 'cl' });
+def('CK≈', 'CK(CI): identidad contingente', { W: 1, md: 'K', fo: 'cl', id: 1, ci: 1 });
+def('CS5≈', 'CS5(CI)', { W: 1, md: 'U', fo: 'cl', id: 1, ci: 1 });
+def('VK≈', 'VK(CI)', { W: 1, md: 'K', fo: 'var', id: 1, ci: 1 });
+def('CK=', 'CK(NI): identidad necesaria', { W: 1, md: 'K', fo: 'cl', id: 1, ni: 1 });
+def('CS5=', 'CS5(NI)', { W: 1, md: 'U', fo: 'cl', id: 1, ni: 1 });
+def('VK=', 'VK(NI)', { W: 1, md: 'K', fo: 'var', id: 1, ni: 1 });
+def('VK=−', 'VK(NI) negativa', { W: 1, md: 'K', fo: 'var', id: 1, ni: 1, nfree: 1 });
 def('CT', 'CT = CKρ', { W: 1, md: 'K', fo: 'cl', R: 'ρ' });
 def('CS4', 'CS4 = CKρτ', { W: 1, md: 'K', fo: 'cl', R: 'ρτ' });
 def('CS5', 'CS5 = CKυ', { W: 1, md: 'U', fo: 'cl' });
@@ -94,17 +101,17 @@ const base = x => (x.endsWith('#') ? x.slice(0, -1) : x);
 
 /* ================= contexto de una rama ================= */
 function ctxOf(path, sys) {
-  const keys = new Set(), worlds = [], ws = new Set(), consts = new Set(), rel = [], rel3 = [];
+  const keys = new Set(), worlds = [], ws = new Set(), consts = new Set(), descs = new Set(), rel = [], rel3 = [];
   const addW = w => { if (w != null && !ws.has(w)) { ws.add(w); worlds.push(w); } };
   path.forEach(n => {
     keys.add(n.key);
     if (n.k === 'r') { addW(n.a); addW(n.b); rel.push(n); }
     else if (n.k === 'r3') { addW(n.a); addW(n.b); addW(n.c); rel3.push(n); }
-    else { addW(n.w); L.constsOf(n.f, consts); }
+    else { addW(n.w); L.constsOf(n.f, consts); L.descsOf(n.f, descs); }
   });
   if (sys.W && !ws.has('0')) addW('0');
   return {
-    path, keys, worlds, consts, rel, rel3,
+    path, keys, worlds, consts, descs, rel, rel3,
     has: spec => keys.has(keyOf(spec)),
     next() { let m = -1; worlds.forEach(w => { const k = parseInt(w, 10); if (k > m) m = k; }); return String(m + 1); },
     fresh() { return L.freshConst(consts); },
@@ -332,6 +339,27 @@ const STRUCT = {
       B.path.forEach(n => { if (n.k === 'f' && !n.s && n.f.t === 'atom' && n.f.p === 'E') B.rel.forEach(r => { if (!r.A && r.a === n.w && r.b !== n.w) out.push(one('DI', F(n.f, r.b))); }); });
       return out;
     } },
+  'IIR': { name: 'Invariancia de la identidad', desc: 'De a=b, i pasa a a=b, j en cada mundo j de la rama (a y b nombres rígidos).',
+    inst: (sys, B) => {
+      const out = [];
+      B.path.forEach(n => {
+        if (n.k !== 'f' || n.s || n.f.t !== 'atom' || n.f.p !== '=' || !n.f.args.every(L.isConst)) return;
+        const [a, b] = n.f.args;
+        B.worlds.forEach(j => {
+          if (j === n.w) return;
+          if (sys.nfree && !B.has(F(Ex(a), j)) && !B.has(F(Ex(b), j))) return;
+          out.push(one('IIR', F(n.f, j)));
+        });
+      });
+      return out;
+    } },
+  'DSC': { name: 'Descriptores', desc: 'Para cada descriptor α y cada mundo i: c=α, i con un nombre rígido c nuevo (lo que α denota en i).', fresh: 1,
+    inst: (sys, B) => {
+      const out = [];
+      B.descs.forEach(d => B.worlds.forEach(i => out.push({ r: 'DSC', fresh: true, make: X => [[F(Eq(X.fresh(), d), i)]],
+        sat: X => X.path.some(m => m.k === 'f' && !m.s && m.w === i && m.f.t === 'atom' && m.f.p === '=' && ((m.f.args[1] === d && L.isConst(m.f.args[0])) || (m.f.args[0] === d && L.isConst(m.f.args[1])))) })));
+      return out;
+    } },
   'C+': { name: 'Centrado', desc: 'Para cada mundo i y cada antecedente A de un condicional: o bien ¬A,i, o bien A,i e i r_A i.',
     inst: (sys, B) => {
       const ants = new Map();
@@ -371,6 +399,8 @@ function structOf(sys) {
   if (sys.nfree) ids.push('NCR');
   if (sys.nfree && sys.id) ids.push('SIE');
   if (sys.di) ids.push('DI');
+  if (sys.ni) ids.push('IIR', 'DSC');
+  if (sys.ci) ids.push('DSC');
   return ids;
 }
 
@@ -690,16 +720,26 @@ function readModel(t, leaf) {
   const consts = [...B.consts].sort();
   consts.forEach(c => { repOf[c] = c; });
   const find = c => (repOf[c] === c ? c : (repOf[c] = find(repOf[c])));
-  lits.forEach(n => { if (!n.s && n.f.t === 'atom' && n.f.p === '=') { const a = find(n.f.args[0]), b = find(n.f.args[1]); if (a !== b) repOf[a > b ? a : b] = a < b ? a : b; } });
-  M.rep = c => find(c);
-  M.dom = [...new Set(consts.map(find))];
+  lits.forEach(n => { if (!n.s && n.f.t === 'atom' && n.f.p === '=' && n.f.args.every(L.isConst)) { const a = find(n.f.args[0]), b = find(n.f.args[1]); if (a !== b) repOf[a > b ? a : b] = a < b ? a : b; } });
+  /* un descriptor denota, en cada mundo, lo que denota el nombre rígido que la rama iguala con él allí */
+  M.desc = {};
+  lits.forEach(n => { if (!n.s && n.f.t === 'atom' && n.f.p === '=') { const [x, y] = n.f.args; const d = L.isDesc(x) ? x : L.isDesc(y) ? y : null, c = d === x ? y : x; if (d && L.isConst(c)) (M.desc[n.w] = M.desc[n.w] || {})[d] = c; } });
+  M.rep = (c, w) => (L.isDesc(c) ? (M.desc[w] && M.desc[w][c] ? find(M.desc[w][c]) : '?' + c) : find(c));
+  if (sys.ci) {   // identidad contingente: cada mundo agrupa los nombres a su manera (los «avatares», 17.2.6)
+    const per = {};
+    M.W.forEach(w => { const o = {}; consts.forEach(c => { o[c] = c; }); per[w] = o; });
+    const fw = (w, c) => (per[w][c] === c || per[w][c] == null ? c : (per[w][c] = fw(w, per[w][c])));
+    lits.forEach(n => { if (!n.s && n.f.t === 'atom' && n.f.p === '=' && n.f.args.every(L.isConst)) { const a = fw(n.w, n.f.args[0]), b = fw(n.w, n.f.args[1]); if (a !== b) per[n.w][a > b ? a : b] = a < b ? a : b; } });
+    M.rep = (c, w) => { const d = L.isDesc(c) ? (M.desc[w] && M.desc[w][c]) : c; return d ? fw(w, d) + '·' + w : '?' + c; };
+  }
+  M.dom = sys.ci ? consts.slice() : [...new Set(consts.map(find))];
   if (sys.fo && !M.dom.length) M.dom = ['a'];
-  const g = f => (f.t === 'atom' && f.args.length ? Atom(f.p, f.args.map(a => (L.isConst(a) ? find(a) : a))) : f);
+  const g = (f, w) => (f.t === 'atom' && f.args.length ? Atom(f.p, f.args.map(a => (L.isTerm(a) ? M.rep(a, w) : a))) : f);
   lits.forEach(n => {
     const w = n.w, f = n.f;
     if (!sys.sg) {
-      if (f.t === 'atom') M.pos[w].add(str(g(f)));
-      if (f.t === 'not' && f.a.t === 'atom') M.neg[w].add(str(g(f.a)));
+      if (f.t === 'atom') M.pos[w].add(str(g(f, w)));
+      if (f.t === 'not' && f.a.t === 'atom') M.neg[w].add(str(g(f.a, w)));
       if (sys.nn === 'L' && w !== '0') {   // en L los valores de □A y ◇A en mundos no normales vienen de la rama
         if (f.t === 'box' || f.t === 'dia') M.fixed[w][str(f)] = 1;
         if (f.t === 'not' && (f.a.t === 'box' || f.a.t === 'dia')) M.fixed[w][str(f.a)] = 0;
@@ -753,8 +793,8 @@ function evU(sys, M, f, w) {
   const normal = M.normal.includes(w);
   switch (f.t) {
     case 'atom':
-      if (f.p === '=') return M.rep(f.args[0]) === M.rep(f.args[1]) && (!sys.nfree || M.E[w].has(M.rep(f.args[0])));
-      return M.pos[w].has(str(f.args.length ? Atom(f.p, f.args.map(M.rep)) : f));
+      if (f.p === '=') return M.rep(f.args[0], w) === M.rep(f.args[1], w) && (!sys.nfree || M.E[w].has(M.rep(f.args[0], w)));
+      return M.pos[w].has(str(f.args.length ? Atom(f.p, f.args.map(a => M.rep(a, w))) : f));
     case 'not': return !evU(sys, M, f.a, w);
     case 'and': return evU(sys, M, f.a, w) && evU(sys, M, f.b, w);
     case 'or': return evU(sys, M, f.a, w) || evU(sys, M, f.b, w);

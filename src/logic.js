@@ -10,7 +10,10 @@ const VARS = 'xyzuvw';
 const CONSTS = 'abcdefghijklmno';
 const PROPS = 'pqrst';
 const isVar = c => VARS.includes(c);
+const DESCS = 'αβγδ';   // descriptores: designadores no rígidos (capítulos 16 y 17)
 const isConst = c => CONSTS.includes(c);
+const isDesc = c => DESCS.includes(c);
+const isTerm = c => isConst(c) || isDesc(c);
 
 class LErr extends Error {}
 const fail = m => { throw new LErr(m); };
@@ -86,18 +89,18 @@ function parse(src) {
     if (c && c >= 'A' && c <= 'Z') {
       i++;
       const args = [];
-      while (s[i] && (isConst(s[i]) || isVar(s[i]))) args.push(s[i++]);
+      while (s[i] && (isTerm(s[i]) || isVar(s[i]))) args.push(s[i++]);
       return Atom(c, args);
     }
-    if (c && (isConst(c) || isVar(c)) && s[i + 1] === '=') {   // identidad: a=b
+    if (c && (isTerm(c) || isVar(c)) && s[i + 1] === '=') {   // identidad: a=b
       const x = c; i += 2;
       const y = s[i];
-      if (!y || !(isConst(y) || isVar(y))) fail('Después de = va un nombre o una variable.');
+      if (!y || !(isTerm(y) || isVar(y))) fail('Después de = va un nombre o una variable.');
       i++;
       return Eq(x, y);
     }
     if (c && PROPS.includes(c)) { i++; return Atom(c); }
-    if (c && (isConst(c) || isVar(c))) fail('«' + c + '» es un nombre o una variable: va después de un predicado (Pa) o en una identidad (a=b).');
+    if (c && (isTerm(c) || isVar(c))) fail('«' + c + '» es un nombre o una variable: va después de un predicado (Pa) o en una identidad (a=b).');
     fail(c ? 'No esperaba «' + c + '» ahí.' : 'La fórmula está incompleta.');
   }
   if (!s) fail('Escribe una fórmula.');
@@ -119,6 +122,11 @@ function atomsOf(fs) {   // parámetros proposicionales, en orden alfabético
   const set = new Set();
   fs.forEach(f => subformulas(f).forEach(g => { if (g.t === 'atom' && !g.args.length) set.add(g.p); }));
   return [...set].sort();
+}
+function descsOf(f, out) {
+  out = out || new Set();
+  subformulas(f).forEach(g => { if (g.t === 'atom') g.args.forEach(a => { if (isDesc(a)) out.add(a); }); });
+  return out;
 }
 function constsOf(f, out) {
   out = out || new Set();
@@ -165,6 +173,6 @@ function evalCL(f, v) {
   }
 }
 
-root.Logic = { VARS, CONSTS, PROPS, isVar, isConst, LErr, fail, Atom, Not, Un, Bin, Qf, Eq, Ex, BIN, UN, isBin, isUn,
+root.Logic = { VARS, CONSTS, PROPS, DESCS, isVar, isConst, isDesc, isTerm, descsOf, LErr, fail, Atom, Not, Un, Bin, Qf, Eq, Ex, BIN, UN, isBin, isUn,
   str, eq, parse, subformulas, size, atomsOf, constsOf, freeVars, closed, isFO, subst, renameConst, freshConst, evalCL };
 })(typeof window !== 'undefined' ? window : globalThis);

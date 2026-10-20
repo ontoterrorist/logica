@@ -870,7 +870,7 @@ function alphabet() {
   let fo = false;
   fs.forEach(f => L.subformulas(f).forEach(g => {
     if (g.t !== 'atom') return;
-    if (g.args.length) { fo = true; if (g.p !== '=') preds.add(g.p); g.args.forEach(a => { if (L.isConst(a)) nm.add(a); }); }
+    if (g.args.length) { fo = true; if (g.p !== '=') preds.add(g.p); g.args.forEach(a => { if (L.isTerm(a)) nm.add(a); }); }
     else preds.add(g.p);
   }));
   const syms = [...(s.syms || '¬∧∨⊃')];

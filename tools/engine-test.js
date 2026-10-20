@@ -170,5 +170,21 @@ check('VK−', ['◇Pa'], '◇∃xPx', V);
 check('VK', ['◇Pa'], '◇∃xPx', I);
 check('VKτt', ['⟨P⟩⟨P⟩∃xQx'], '⟨P⟩∃x(Qx∨Sx)', V);
 check('VKt', ['∃x⟨P⟩Qx∧∃xQx'], '∃x⟨F⟩Qx', I);
+/* capítulo 16 */
+check('VK=', [], '∀x∀y(x=y⊃□x=y)', V);
+check('VK=', [], '∀x∀y(¬x=y⊃□¬x=y)', V);
+check('CK=', [], '□∀x∀y((Sax∧Say)⊃x=y)', I);
+check('VK=−', [], 'a=b⊃□(Ea⊃a=b)', V);
+check('VK=−', [], '∀x∀y(x=y⊃□x=y)', I);
+check('CK=', ['∀x□Px'], '□Pα', V);
+check('CK=', [], 'a=α⊃□a=α', I);
+check('CK=', ['a=b'], '□a=b', V);
+/* capítulo 17 */
+check('CK≈', [], '∀x∀y□(x=y⊃(Px⊃Py))', V);
+check('CS5≈', [], '∀x∀y(x=y⊃□x=y)', I);
+check('CK≈', [], '∀x∀y((◇x=y∧Px)⊃Py)', I);
+check('CK≈', ['a=b', '□a=a'], '□a=b', I);
+check('CK=', ['a=b', '□a=a'], '□a=b', V);
+check('CK≈', ['Pa'], '∃xPx', V);
 console.log(bad ? `${bad} de ${n} fallan` : `${n} pruebas del motor, todas bien`);
 process.exit(bad ? 1 : 0);
