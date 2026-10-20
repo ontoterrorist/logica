@@ -38,10 +38,10 @@ C.world({
       outro: 'Válida en S5.' }),
     T('Contramodelos con forma', [
       { say: 'Los contramodelos se leen como en K, ahora con toda la información sobre r. Este árbol de B (reflexiva y simétrica) muestra que {□p⊃□□p} falla en B.',
-        fig: tab('B', [], '□p⊃□□p') },
+        fig: tab('Kρσ', [], '□p⊃□□p') },
       { say: 'El modelo: w0 y w1 se ven entre sí, w1 y w2 también, y cada uno se ve a sí mismo. {p} vale en w0 y en w1, pero no en w2. Desde w0, {□p} vale; pero w1 ve a w2, así que {□p} falla en w1 y {□□p} falla en w0. Falta la transitividad.' }
     ]),
-    A('Sin transitividad (B)', 'B', ['□p'], '□□p', {
+    A('Sin transitividad (B)', 'Kρσ', ['□p'], '□□p', {
       outro: 'Inválida en B. Sin τ, la necesidad no se hereda dos pasos más allá.' }),
     A('Simétrica pero no reflexiva', 'Kσ', ['□p'], 'p', {
       outro: 'Inválida en Kσ: la simetría sola no da la reflexividad.' }),
@@ -103,10 +103,10 @@ C.world({
     A('Jefe de las corrientes', 'S5', ['◇□p'], 'p', { boss: true,
       intro: 'Con ρ, σ y τ juntas. Organízate: mundo nuevo, relación, necesidades.',
       outro: '¡Válida en S5!' }),
-    V('La máquina de sistemas', { sys: ['K', 'D', 'T', 'B', 'S4', 'S5', 'Kt'], syms: '¬∧∨⊃≡□◇', goals: ['valid', 'invalid', 'split'],
+    V('La máquina de sistemas', { sys: ['K', 'D', 'T', 'Kρσ', 'S4', 'S5', 'Kt'], syms: '¬∧∨⊃≡□◇', goals: ['valid', 'invalid', 'split'],
       intro: 'Elige el sistema arriba. Prueba la misma inferencia en varios: busca una que sea válida en uno e inválida en otro.',
       outro: 'Cuantas más condiciones sobre R, más inferencias válidas.',
-      ex: [[['□p'], 'p', 'invalid', 'K'], [['□p'], 'p', 'valid', 'T'], [['□p'], '□□p', 'valid', 'S4'], [['□p'], '□□p', 'invalid', 'B'], [['◇p'], '□◇p', 'valid', 'S5'], [['□p'], '◇p', 'valid', 'D']] })
+      ex: [[['□p'], 'p', 'invalid', 'K'], [['□p'], 'p', 'valid', 'T'], [['□p'], '□□p', 'valid', 'S4'], [['□p'], '□□p', 'invalid', 'Kρσ'], [['◇p'], '□◇p', 'valid', 'S5'], [['□p'], '◇p', 'valid', 'D']] })
   ]
 });
 })(window.CONTENT);

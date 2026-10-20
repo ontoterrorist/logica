@@ -22,7 +22,7 @@ def('D', 'D = Kη', { W: 1, md: 'K', R: 'η' });
 def('T', 'T = Kρ', { W: 1, md: 'K', R: 'ρ' });
 def('Kσ', 'Kσ', { W: 1, md: 'K', R: 'σ' });
 def('Kτ', 'Kτ', { W: 1, md: 'K', R: 'τ' });
-def('B', 'B = Kρσ', { W: 1, md: 'K', R: 'ρσ' });
+def('Kρσ', 'B = Kρσ', { W: 1, md: 'K', R: 'ρσ' });
 def('S4', 'S4 = Kρτ', { W: 1, md: 'K', R: 'ρτ' });
 def('S5', 'S5 = Kρστ', { W: 1, md: 'K', R: 'ρστ' });
 def('Kυ', 'S5 = Kυ', { W: 1, md: 'U' });
@@ -38,7 +38,7 @@ def('C', 'C', { W: 1, md: 'U', cond: 'C' });
 def('C+', 'C⁺', { W: 1, md: 'U', cond: 'C+' });
 def('I', 'Intuicionista', { W: 1, sg: 1, int: 1, R: 'ρτ' });
 def('IQ', 'Intuicionista de primer orden', { W: 1, sg: 1, int: 1, R: 'ρτ', fo: 'int' });
-def('IQ=', 'Intuicionista de primer orden con identidad', { W: 1, sg: 1, int: 1, R: 'ρτ', fo: 'int', id: 1, ci: 1 });
+def('IQ=', 'Intuicionista de primer orden con identidad', { W: 1, sg: 1, int: 1, R: 'ρτ', fo: 'int', eq: 1, ci: 1 });
 def('FDE', 'FDE', { sg: 1, neg: 'fde', imp: 'def' });
 def('K3', 'K3', { sg: 1, neg: 'fde', imp: 'def', cl: 'k3' });
 def('LP', 'LP', { sg: 1, neg: 'fde', imp: 'def', cl: 'lp' });
@@ -60,13 +60,13 @@ def('KFDEρ', 'K_FDE ρ', { W: 1, sg: 1, neg: 'fde', imp: 'def', md: 'K', R: 'ρ
 def('KK3τ', 'K_K3 τ', { W: 1, sg: 1, neg: 'fde', imp: 'def', md: 'K', cl: 'k3', R: 'τ' });
 def('KLPρ', 'K_LP ρ', { W: 1, sg: 1, neg: 'fde', imp: 'def', md: 'K', cl: 'lp', R: 'ρ' });
 def('A', 'A (Aristóteles): K3ρτ con persistencia', { W: 1, sg: 1, neg: 'fde', imp: 'def', md: 'K', cl: 'k3', R: 'ρτ', pers: 1 });
-def('QFDE', 'FDE de primer orden', { sg: 1, neg: 'fde', imp: 'def', fo: 'cl', id: 1 });
-def('QK3', 'K3 de primer orden', { sg: 1, neg: 'fde', imp: 'def', fo: 'cl', id: 1, cl: 'k3' });
-def('QLP', 'LP de primer orden', { sg: 1, neg: 'fde', imp: 'def', fo: 'cl', id: 1, cl: 'lp' });
+def('QFDE', 'FDE de primer orden', { sg: 1, neg: 'fde', imp: 'def', fo: 'cl', eq: 1 });
+def('QK3', 'K3 de primer orden', { sg: 1, neg: 'fde', imp: 'def', fo: 'cl', eq: 1, cl: 'k3' });
+def('QLP', 'LP de primer orden', { sg: 1, neg: 'fde', imp: 'def', fo: 'cl', eq: 1, cl: 'lp' });
 def('FFDE', 'FDE libre', { sg: 1, neg: 'fde', imp: 'def', fo: 'free' });
 def('FFDE−', 'FDE libre negativa', { sg: 1, neg: 'fde', imp: 'def', fo: 'free', nfree: 'neg' });
 def('FFDE0', 'FDE libre neutra', { sg: 1, neg: 'fde', imp: 'def', fo: 'free', nfree: 'neu' });
-def('QFDE*', 'FDE de primer orden con estrella', { W: 1, sg: 1, neg: 'star', imp: 'def', fo: 'cl', id: 1, ni: 1 });
+def('QFDE*', 'FDE de primer orden con estrella', { W: 1, sg: 1, neg: 'star', imp: 'def', fo: 'cl', eq: 1, ni: 1 });
 def('QK4', 'K4 de primer orden', { W: 1, sg: 1, neg: 'fde', imp: 'def', arr: 'K4', fo: 'cl' });
 def('QN4', 'N4 de primer orden', { W: 1, sg: 1, neg: 'fde', imp: 'def', arr: 'N4', fo: 'cl' });
 def('QK*', 'K* de primer orden', { W: 1, sg: 1, neg: 'star', imp: 'def', arr: 'K*', fo: 'cl' });
@@ -76,27 +76,31 @@ def('QI3', 'I3 de primer orden', { W: 1, sg: 1, neg: 'fde', imp: 'def', cn: 1, c
 def('QW', 'W de primer orden', { W: 1, sg: 1, neg: 'fde', imp: 'def', cn: 'W', R: 'ρτ', fo: 'int' });
 def('B', 'B (relevante básica)', { W: 1, sg: 1, neg: 'star', imp: 'def', arr: 'B', tern: 1 });
 def('DW', 'DW = B + C8', { W: 1, sg: 1, neg: 'star', imp: 'def', arr: 'B', tern: 1, R: 'C8' });
+def('QB', 'B de primer orden', { W: 1, sg: 1, neg: 'star', imp: 'def', arr: 'B', tern: 1, fo: 'cl' });
+def('QB=', 'B de primer orden con identidad', { W: 1, sg: 1, neg: 'star', imp: 'def', arr: 'B', tern: 1, fo: 'cl', rid: 1 });
+def('QB=⊆', 'B con identidad y restricción de subconjunto', { W: 1, sg: 1, neg: 'star', imp: 'def', arr: 'B', tern: 1, fo: 'cl', rid: 1, sc: 1 });
+def('QDW', 'DW de primer orden', { W: 1, sg: 1, neg: 'star', imp: 'def', arr: 'B', tern: 1, R: 'C8', fo: 'cl' });
 def('CB', 'CB', { W: 1, sg: 1, neg: 'star', imp: 'def', arr: 'B', tern: 1, cond: 'C' });
 def('CB+', 'CB⁺', { W: 1, sg: 1, neg: 'star', imp: 'def', arr: 'B', tern: 1, cond: 'C+' });
-def('FOL', 'Primer orden clásica', { fo: 'cl', id: 1 });
+def('FOL', 'Primer orden clásica', { fo: 'cl', eq: 1 });
 def('CK', 'CK (dominio constante)', { W: 1, md: 'K', fo: 'cl' });
 def('CC', 'CC: C de dominio constante', { W: 1, md: 'U', cond: 'C', fo: 'cl' });
 def('VC', 'VC: C de dominio variable', { W: 1, md: 'U', cond: 'C', fo: 'var' });
 def('CC+', 'CC⁺', { W: 1, md: 'U', cond: 'C+', fo: 'cl' });
 def('VC+', 'VC⁺', { W: 1, md: 'U', cond: 'C+', fo: 'var' });
-def('CL', 'CL: L de dominio constante', { W: 1, md: 'K', nn: 'L', fo: 'cl' });
+def('CL(L)', 'CL: L de dominio constante', { W: 1, md: 'K', nn: 'L', fo: 'cl' });
 def('CLρ', 'CLρ', { W: 1, md: 'K', nn: 'L', fo: 'cl', R: 'ρ' });
 def('VL', 'VL: L de dominio variable', { W: 1, md: 'K', nn: 'L', fo: 'var' });
 def('CN', 'CN: N de dominio constante', { W: 1, md: 'K', nn: 'N', fo: 'cl' });
 def('VN', 'VN: N de dominio variable', { W: 1, md: 'K', nn: 'N', fo: 'var' });
 def('CNρ', 'CNρ (S2 cuantificada)', { W: 1, md: 'K', nn: 'N', fo: 'cl', R: 'ρ' });
-def('CK≈', 'CK(CI): identidad contingente', { W: 1, md: 'K', fo: 'cl', id: 1, ci: 1 });
-def('CS5≈', 'CS5(CI)', { W: 1, md: 'U', fo: 'cl', id: 1, ci: 1 });
-def('VK≈', 'VK(CI)', { W: 1, md: 'K', fo: 'var', id: 1, ci: 1 });
-def('CK=', 'CK(NI): identidad necesaria', { W: 1, md: 'K', fo: 'cl', id: 1, ni: 1 });
-def('CS5=', 'CS5(NI)', { W: 1, md: 'U', fo: 'cl', id: 1, ni: 1 });
-def('VK=', 'VK(NI)', { W: 1, md: 'K', fo: 'var', id: 1, ni: 1 });
-def('VK=−', 'VK(NI) negativa', { W: 1, md: 'K', fo: 'var', id: 1, ni: 1, nfree: 1 });
+def('CK≈', 'CK(CI): identidad contingente', { W: 1, md: 'K', fo: 'cl', eq: 1, ci: 1 });
+def('CS5≈', 'CS5(CI)', { W: 1, md: 'U', fo: 'cl', eq: 1, ci: 1 });
+def('VK≈', 'VK(CI)', { W: 1, md: 'K', fo: 'var', eq: 1, ci: 1 });
+def('CK=', 'CK(NI): identidad necesaria', { W: 1, md: 'K', fo: 'cl', eq: 1, ni: 1 });
+def('CS5=', 'CS5(NI)', { W: 1, md: 'U', fo: 'cl', eq: 1, ni: 1 });
+def('VK=', 'VK(NI)', { W: 1, md: 'K', fo: 'var', eq: 1, ni: 1 });
+def('VK=−', 'VK(NI) negativa', { W: 1, md: 'K', fo: 'var', eq: 1, ni: 1, nfree: 1 });
 def('CT', 'CT = CKρ', { W: 1, md: 'K', fo: 'cl', R: 'ρ' });
 def('CS4', 'CS4 = CKρτ', { W: 1, md: 'K', fo: 'cl', R: 'ρτ' });
 def('CS5', 'CS5 = CKυ', { W: 1, md: 'U', fo: 'cl' });
@@ -110,8 +114,8 @@ def('VKt', 'VKt (tiempo, dominio variable)', { W: 1, md: 'K', fo: 'var', tense: 
 def('VKτt', 'VKτt', { W: 1, md: 'K', fo: 'var', tense: 1, R: 'τ' });
 def('VK+', 'VK con dominios crecientes', { W: 1, md: 'K', fo: 'var', di: 1 });
 def('VK−', 'VK negativa', { W: 1, md: 'K', fo: 'var', nfree: 1 });
-def('FREE', 'Lógica libre positiva', { fo: 'free', id: 1 });
-def('NFREE', 'Lógica libre negativa', { fo: 'free', id: 1, nfree: 1 });
+def('FREE', 'Lógica libre positiva', { fo: 'free', eq: 1 });
+def('NFREE', 'Lógica libre negativa', { fo: 'free', eq: 1, nfree: 1 });
 
 /* ================= nodos ================= */
 const F = (f, w, s) => ({ k: 'f', f, w: w == null ? null : String(w), s: s || '' });
@@ -392,6 +396,8 @@ const STRUCT = {
       });
       return out;
     } },
+  'SC': { name: 'Restricción de subconjunto', desc: 'De a=b, +α pasa a a=b, +0: la identidad de los mundos no normales vuelve al mundo 0.',
+    inst: (sys, B) => B.path.filter(n => n.k === 'f' && n.s === '+' && n.w !== '0' && n.f.t === 'atom' && n.f.p === '=' && n.f.args.every(L.isConst)).map(n => one('SC', F(n.f, '0', '+'))) },
   'SIE': { name: 'Autoidentidad de lo existente', desc: 'De Ea pasa a a=a.',
     inst: (sys, B) => B.path.filter(n => n.k === 'f' && !n.s && n.f.t === 'atom' && n.f.p === 'E').map(n => one('SIE', F(Eq(n.f.args[0], n.f.args[0]), n.w))) },
   'DI': { name: 'Dominios crecientes', desc: 'De irj y Ea,i pasa a Ea,j: lo que existe en un mundo existe en los que ve.',
@@ -434,18 +440,21 @@ const STRUCT = {
     inst: (sys, B) => {
       const out = [];
       const sg = sys.sg ? '+' : '';
-      const ids = B.path.filter(n => n.k === 'f' && n.s === sg && n.f.t === 'atom' && n.f.p === '=' && n.f.args[0] !== n.f.args[1]);
+      const ids = B.path.filter(n => n.k === 'f' && n.s === sg && n.f.t === 'atom' && n.f.p === '=' && n.f.args[0] !== n.f.args[1] && (!sys.rid || n.w === '0'));
       const ats = B.path.filter(n => n.k === 'f' && n.s === sg && ((n.f.t === 'atom' && n.f.args.length) || (sys.neg === 'fde' && n.f.t === 'not' && n.f.a.t === 'atom' && n.f.a.args.length)));
       ids.forEach(e => {
         const [a, b] = e.f.args;
-        ats.forEach(m => {
-          if (m === e || m.w !== e.w) return;
+        const self = sys.sg ? [F(Atom('=', [a, a]), e.w, sg)] : [];   // a=a, +0 está siempre disponible
+        [...ats, ...self].forEach(m => {
+          if (m === e || (!sys.rid && m.w !== e.w)) return;   // relevante (24.6.1): identidades del mundo 0, en cualquier mundo
           const at = m.f.t === 'not' ? m.f.a : m.f, wrap = g => (m.f.t === 'not' ? Not(g) : g);
+          if (at.p === '=' && at.args.length === 2 && at.args.includes(a) && at.args.includes(b) && a !== b) out.push(one('SI', F(wrap(Atom('=', [at.args[1], at.args[0]])), m.w, sg)));
           [[a, b], [b, a]].forEach(([x, y]) => {
             const pos = at.args.map((t, i) => (t === x ? i : -1)).filter(i => i >= 0);
             for (let mask = 1; mask < (1 << pos.length); mask++) {
               const args = at.args.slice();
               pos.forEach((p, k) => { if (mask & (1 << k)) args[p] = y; });
+              if (at.p === '=' && args[0] === args[1]) continue;   // a=a no aporta nada (el giro de a=b se hace abajo, en un paso)
               out.push(one('SI', F(wrap(Atom(at.p, args)), m.w, sg)));
             }
           });
@@ -459,9 +468,10 @@ function structOf(sys) {
   if (sys.R.includes('C8')) ids.push('C8');
   if (sys.int || sys.cn || sys.pers) ids.push('her');
   if (sys.cond === 'C+') ids.push(sys.sg ? 'CB+' : 'C+');
-  if (sys.id && sys.fo) ids.push('SI');
+  if ((sys.eq || sys.rid) && sys.fo) ids.push('SI');
+  if (sys.sc) ids.push('SC');
   if (sys.nfree) ids.push(sys.sg ? 'NCR±' : 'NCR');
-  if (sys.nfree && sys.id) ids.push('SIE');
+  if (sys.nfree && sys.eq) ids.push('SIE');
   if (sys.di) ids.push('DI');
   if (sys.ni) ids.push('IIR', 'DSC');
   if (sys.ci && !sys.int) ids.push('DSC');
@@ -483,7 +493,7 @@ function clash(sys, a, b) {
   if ((sys.cl === 'lp' || sys.cl === 'both') && a.s === '-' && b.s === '-' && (negOf(a, b) || negOf(b, a))) return true;
   return false;
 }
-const selfClash = (sys, a) => a.k === 'f' && sys.sg ? (a.s === '-' && a.f.t === 'atom' && a.f.p === '=' && a.f.args[0] === a.f.args[1]) : a.k === 'f' && !sys.nfree && a.f.t === 'not' && a.f.a.t === 'atom' && a.f.a.p === '=' && a.f.a.args[0] === a.f.a.args[1];
+const selfClash = (sys, a) => a.k === 'f' && sys.sg ? (a.s === '-' && (!sys.rid || a.w === '0') && a.f.t === 'atom' && a.f.p === '=' && a.f.args[0] === a.f.args[1]) : a.k === 'f' && !sys.nfree && a.f.t === 'not' && a.f.a.t === 'atom' && a.f.a.p === '=' && a.f.a.args[0] === a.f.a.args[1];
 
 /* ================= el árbol ================= */
 class Tab {
@@ -789,7 +799,7 @@ function readModel(t, leaf) {
   const consts = [...B.consts].sort();
   consts.forEach(c => { repOf[c] = c; });
   const find = c => (repOf[c] === c ? c : (repOf[c] = find(repOf[c])));
-  lits.forEach(n => { if ((!n.s || n.s === '+') && n.f.t === 'atom' && n.f.p === '=' && n.f.args.every(L.isConst)) { const a = find(n.f.args[0]), b = find(n.f.args[1]); if (a !== b) repOf[a > b ? a : b] = a < b ? a : b; } });
+  lits.forEach(n => { if ((!n.s || n.s === '+') && (!sys.rid || n.w === '0') && n.f.t === 'atom' && n.f.p === '=' && n.f.args.every(L.isConst)) { const a = find(n.f.args[0]), b = find(n.f.args[1]); if (a !== b) repOf[a > b ? a : b] = a < b ? a : b; } });
   /* un descriptor denota, en cada mundo, lo que denota el nombre rígido que la rama iguala con él allí */
   M.desc = {};
   lits.forEach(n => { if (!n.s && n.f.t === 'atom' && n.f.p === '=') { const [x, y] = n.f.args; const d = L.isDesc(x) ? x : L.isDesc(y) ? y : null, c = d === x ? y : x; if (d && L.isConst(c)) (M.desc[n.w] = M.desc[n.w] || {})[d] = c; } });
@@ -952,7 +962,7 @@ function evStar(sys, M, f, w) {
   const normal = M.normal.includes(w);
   switch (f.t) {
     case 'atom':
-      if (f.p === '=') return tv(M.rep(f.args[0], w) === M.rep(f.args[1], w));
+      if (f.p === '=' && !(sys.rid && !normal)) return tv(M.rep(f.args[0], w) === M.rep(f.args[1], w));
       return tv(M.pos[w].has(str(f.args.length ? Atom(f.p, f.args.map(a => M.rep(a, w))) : f)));
     case 'ex': if (!sys.int) return tv(M.dom.some(d => evStar(sys, M, subst(f.a, f.v, d), w).t));
       return tv([...M.E[w]].some(d => evStar(sys, M, subst(f.a, f.v, d), w).t));

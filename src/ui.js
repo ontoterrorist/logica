@@ -291,7 +291,7 @@ function enterStage() {
   }
   if (s.t === 'M') {
     const prem = s.prem.map(L.parse), goal = s.concl ? L.parse(s.concl) : null, val = {};
-    const atoms = s.dom ? SEM.groundAtoms(goal ? [...prem, goal] : prem, s.dom) : L.atomsOf(goal ? [...prem, goal] : prem);
+    const atoms = s.dom ? SEM.groundAtoms(goal ? [...prem, goal] : prem, s.dom, SEM.MV[s.sys].fid) : L.atomsOf(goal ? [...prem, goal] : prem);
     atoms.forEach(a => { val[a] = SEM.MV[s.sys].vals[0]; });
     ST = { type: 'M', stage: s, prem, goal, atoms, val, moves: 0, msg: { k: 'info', h: tx(s.intro) } };
   }
@@ -682,7 +682,8 @@ function scrModel() {
   ST.all = all;
   if (S.glb) {   // L: no hay designados fijos; la conclusión tiene que quedar por debajo del mínimo de las premisas
     const mins = Math.min(1, ...ST.prem.map(f => SEM.evMV(s.sys, f, ST.val, s.dom))), cv = SEM.evMV(s.sys, ST.goal, ST.val, s.dom);
-    ST.all = SEM.glbFails(s.sys, ST.prem, ST.goal, ST.val, s.dom);
+    const fb = SEM.fidBad(s.sys, ST.val, s.dom, ST.atoms);
+    ST.all = !fb && SEM.glbFails(s.sys, ST.prem, ST.goal, ST.val, s.dom);
     const rows2 = [...ST.prem.map(f => ['Premisa', f]), ['Conclusión', ST.goal]].map(([lab, f]) => `<tr><td class="lab">${lab}</td><td>${fh(f)}</td><td>${vchip2(s.sys, SEM.evMV(s.sys, f, ST.val, s.dom))}</td></tr>`).join('');
     return `<div class="proof">${goalHTML('CONTRAEJEMPLO', ST.prem, ST.goal, '⊬', S.name)}
       <div class="cols"><div class="panel model">
@@ -690,7 +691,7 @@ function scrModel() {
         <div class="vals">${ST.atoms.map(a => `<div class="vrow"><span class="fm">${esc(a)}</span><span class="seg">${S.vals.map(v => `<button class="vbtn ${vcls(v)}${ST.val[a] === v ? ' on' : ''}" data-act="val" data-a="${a}" data-v="${v}" aria-pressed="${ST.val[a] === v}">${esc(SEM.vname(s.sys, v))}</button>`).join('')}</span></div>`).join('')}</div>
         <div class="mlabel">RESULTADO</div>
         <div class="tw"><table class="tbl vt"><tbody>${rows2}</tbody></table></div>
-        <p class="cap">${ST.prem.length ? 'Mínimo de las premisas' : 'Sin premisas, el listón es'}: <b>${SEM.vname(s.sys, mins)}</b> · conclusión: <b>${SEM.vname(s.sys, cv)}</b> · ${ST.all ? '<b class="good">¡la conclusión queda por debajo!</b>' : 'la conclusión tiene que quedar por debajo'}</p>
+        <p class="cap">${ST.prem.length ? 'Mínimo de las premisas' : 'Sin premisas, el listón es'}: <b>${SEM.vname(s.sys, mins)}</b> · conclusión: <b>${SEM.vname(s.sys, cv)}</b> · ${ST.all ? '<b class="good">¡la conclusión queda por debajo!</b>' : 'la conclusión tiene que quedar por debajo'}</p>${fb ? `<p class="cap"><b>Cuidado:</b> ${esc(fb)}.</p>` : ''}
       </div><div class="side">${sayBox(ST.msg, true)}</div></div></div>`;
   }
   return `<div class="proof">
@@ -761,7 +762,7 @@ function scrLab() {
           <div class="chips">${prem}<button class="chip add" data-act="vadd" ${off}>+ Premisa</button></div>
           <div class="mlabel">CONCLUSIÓN</div>
           <div class="chips">${concl}</div>
-          <div class="acts"><button class="btn pri" data-act="vrun" ${ST.concl && !ST.busy ? '' : 'disabled'}>Construir árbol</button>
+          <div class="acts"><button class="btn pri" data-act="vrun" ${ST.concl && !ST.busy ? '' : 'disabled'}>${isMV(ST.sys) ? 'Calcular valores' : 'Construir árbol'}</button>
             <button class="btn sm" data-act="vclear" ${off}>Vaciar</button></div>
         </div>
         ${labResult()}
@@ -785,7 +786,7 @@ function labResult() {
 }
 function labSay(r) {
   if (isMV(ST.sys)) {
-    if (r.v === 'valid' && r.how === 'dom') return `Ningún dominio de uno a tres objetos da un contraejemplo (revisé ${r.rows} valuaciones en el último). Es un buen indicio, no una prueba: los dominios pueden ser infinitos.`;
+    if (r.v === 'valid' && r.how === 'dom') return `${r.upto === 1 ? 'Un dominio de un objeto no da' : 'Ningún dominio de uno a ' + (r.upto === 2 ? 'dos' : 'tres') + ' objetos da'} un contraejemplo (revisé ${r.rows} valuaciones en el último). Es un buen indicio, no una prueba: los dominios pueden ser infinitos.`;
     if (r.v === 'valid' && r.how === 'grid') return `Ninguna de las ${r.rows} valuaciones de la cuadrícula (de décimo en décimo) la refuta. Es un buen indicio de validez, aunque no una prueba: en L los valores son infinitos.`;
     if (r.v === 'valid') return `¡Válida! Revisé las ${r.rows} valuaciones: en ninguna las premisas son designadas y la conclusión no.`;
     if (r.v === 'invalid') return 'Inválida. Con estos valores las premisas son designadas y la conclusión no.';
@@ -811,7 +812,7 @@ function labGoals(r) {
   }
 }
 function runCheck(sys, prem, concl) {
-  if (isMV(sys)) { const m = SEM.checkMV(sys, prem, concl, ST.stage.fo ? true : undefined); return { v: m.v, rows: m.rows, mv: m, how: m.how }; }
+  if (isMV(sys)) { const m = SEM.checkMV(sys, prem, concl, ST.stage.fo ? true : undefined); return { v: m.v, rows: m.rows, mv: m, how: m.how, upto: m.upto }; }
   const r = TB.solve(sys, prem, concl, 500);
   const out = { v: r.verdict, tab: r.t, open: r.open };
   if (r.open) out.model = TB.readModel(r.t, r.open);
@@ -1072,7 +1073,7 @@ const ACT = {
       const stars = ST.moves <= ST.atoms.length + 1 ? 3 : 2;
       finish(stars);
       const mine = ST;
-      setTimeout(() => { if (ST === mine) winModal(stars, '¡BIEN!', mine.goal ? 'Premisas designadas y conclusión no: la inferencia es inválida.' : 'Todas designadas a la vez.'); }, 500);
+      setTimeout(() => { if (ST === mine) winModal(stars, '¡BIEN!', mine.goal ? (SEM.MV[mine.stage.sys].glb ? 'La conclusión queda por debajo de las premisas: la inferencia es inválida.' : 'Premisas designadas y conclusión no: la inferencia es inválida.') : 'Todas designadas a la vez.'); }, 500);
     }
   },
   qpick(d) {

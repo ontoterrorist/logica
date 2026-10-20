@@ -130,10 +130,11 @@ function RULEBOOK(sys) {
   return out;
 }
 function CLOSURE(sys) {
-  if (!sys.sg) return 'Una rama se cierra cuando tiene {A} y {¬A}' + (sys.W ? ' en el mismo mundo' : '') + '.' + (sys.id ? ' También con {¬a=a}, o con {a=b} y {¬b=a}.' : '');
+  if (!sys.sg) return 'Una rama se cierra cuando tiene {A} y {¬A}' + (sys.W ? ' en el mismo mundo' : '') + '.' + (sys.eq ? ' También con {¬a=a}, o con {a=b} y {¬b=a}.' : '');
   let s = 'Una rama se cierra cuando tiene {A,+} y {A,−}' + (sys.W ? ' en el mismo mundo' : '') + '.';
   if (sys.cl === 'k3' || sys.cl === 'both') s += ' Además (K3) con {A,+} y {¬A,+}.';
   if (sys.cl === 'lp' || sys.cl === 'both') s += ' Además (LP) con {A,−} y {¬A,−}.';
+  if (sys.eq || sys.rid) s += sys.rid ? ' También con {a=a,−0}: solo en el mundo 0, el normal.' : ' También con {a=a,−}.';
   return s;
 }
 

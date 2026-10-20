@@ -12,11 +12,11 @@ C.world({
     ]),
     T('CL y sus árboles', [
       { say: '<b>CL</b> es la L del capítulo 4 (S0.5⁰) con dominio constante. Los árboles: los de L (las reglas modales solo en el mundo 0) más las reglas clásicas de los cuantificadores.',
-        fig: tab('CL', [], '□(∃x◇(Px∧Qx)⊃∃x◇Px)') },
+        fig: tab('CL(L)', [], '□(∃x◇(Px∧Qx)⊃∃x◇Px)') },
       { say: 'El contramodelo se lee como en el caso normal, con todos los mundos salvo 0 no normales; y en cada uno de ellos, la extensión de una matriz son las tuplas cuyas instancias aparecen en la rama.' }
     ]),
-    A('Instanciar bajo la caja', 'CL', [], '∀x□Px⊃□Pa', { outro: 'Válida en CL.' }),
-    A('En un mundo sin leyes', 'CL', [], '□(∃x◇(Px∧Qx)⊃∃x◇Px)', { outro: 'Inválida en CL: el mundo 1 no es normal, y ahí ◇ no tiene reglas.' }),
+    A('Instanciar bajo la caja', 'CL(L)', [], '∀x□Px⊃□Pa', { outro: 'Válida en CL(L).' }),
+    A('En un mundo sin leyes', 'CL(L)', [], '□(∃x◇(Px∧Qx)⊃∃x◇Px)', { outro: 'Inválida en CL(L): el mundo 1 no es normal, y ahí ◇ no tiene reglas.' }),
     T('Cambios de tono', [
       { say: '<b>VL</b> es la versión de dominio variable: los cuantificadores siguen las reglas libres, como en el capítulo 15.' },
       { say: '<b>CN</b> y <b>VN</b> son las versiones cuantificadas de N: en los mundos no normales toda matriz {□A} tiene extensión vacía y toda {◇A} la total. En los árboles, la regla de {◇} solo se activa en 0 o en mundos □-habitados.' },
@@ -36,10 +36,10 @@ C.world({
       { q: 'En N cuantificada, ¿hacen falta las matrices?', opts: ['sí, siempre', 'no: basta con □ falsa y ◇ verdadera en los mundos no normales'], ok: 1, why: 'El valor de las fórmulas modales ya no depende de nada arbitrario.' }
     ]),
     A('Jefe del galeón', 'CNρ', ['□∀x(Px⊃Qx)', '□Pa'], 'Qa', { boss: true, outro: '¡Válida en CNρ, la S2 cuantificada!' }),
-    V('La máquina del galeón', { sys: ['CL', 'VL', 'CN', 'VN', 'CLρ', 'CNρ', 'CK'], syms: '¬∧∨⊃∀∃□◇', goals: ['valid', 'invalid', 'split'],
+    V('La máquina del galeón', { sys: ['CL(L)', 'VL', 'CN', 'VN', 'CLρ', 'CNρ', 'CK'], syms: '¬∧∨⊃∀∃□◇', goals: ['valid', 'invalid', 'split'],
       intro: 'Lógicas no normales con cuantificadores. Compáralas con CK.',
       outro: 'Cada lógica no normal queda por debajo de su versión normal.',
-      ex: [[[], '∀x□Px⊃□Pa', 'valid', 'CL'], [[], '□(∃x◇(Px∧Qx)⊃∃x◇Px)', 'invalid', 'CL'], [[], '□(∃x◇(Px∧Qx)⊃∃x◇Px)', 'valid', 'CK'], [['∀x□(Px⊃Qx)', '□Pa'], '□Qa', 'valid', 'CN'], [[], '□(∃x□Px⊃∃xPx)', 'invalid', 'VL'], [['□∀x(Px⊃Qx)', '□Pa'], 'Qa', 'valid', 'CNρ']] })
+      ex: [[[], '∀x□Px⊃□Pa', 'valid', 'CL(L)'], [[], '□(∃x◇(Px∧Qx)⊃∃x◇Px)', 'invalid', 'CL(L)'], [[], '□(∃x◇(Px∧Qx)⊃∃x◇Px)', 'valid', 'CK'], [['∀x□(Px⊃Qx)', '□Pa'], '□Qa', 'valid', 'CN'], [[], '□(∃x□Px⊃∃xPx)', 'invalid', 'VL'], [['□∀x(Px⊃Qx)', '□Pa'], 'Qa', 'valid', 'CNρ']] })
   ]
 });
 })(window.CONTENT);
