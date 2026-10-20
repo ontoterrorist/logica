@@ -30,7 +30,7 @@ C.world({
       outro: 'Modus ponens es válido: en una rama aparecen {p} y {¬p}; en la otra, {q} y {¬q}.' }),
     A('Cadena de condicionales', 'CL', ['p⊃q', 'q⊃r'], 'p⊃r', {
       intro: 'Empieza por la conclusión negada: {¬(p⊃r)} no ramifica.',
-      outro: 'Las cuatro ramas se cierran. El condicional material es transitivo.' }),
+      outro: 'Válida: las cuatro ramas se cierran. El condicional material es transitivo.' }),
     T('Las demás reglas', [
       { say: 'Cada conectiva tiene dos reglas: una para la fórmula y otra para su negación. Se recuerdan pensando en cuándo la fórmula es verdadera: si lo es, también lo son las líneas de al menos una de las ramas que se abren.',
         fig: rule(r(['{¬¬A}'], [['{A}']]), r(['{A∧B}'], [['{A}', '{B}']]), r(['{¬(A∧B)}'], [['{¬A}'], ['{¬B}']])) },

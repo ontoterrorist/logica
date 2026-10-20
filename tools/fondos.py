@@ -14,29 +14,36 @@ HERE = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 GEN, ART = os.path.join(HERE, 'gen', 'bg'), os.path.join(HERE, 'src', 'bg')
 CLIENT = os.path.join(HERE, '..', 'metaphysics-advance', 'tools', 'pixellab.py')
 W, H = 256, 192
-STYLE = ('pixel art background for a Game Boy Advance RPG in the style of Mario and Luigi Superstar Saga, wide scenic view, '
-         'rich saturated colors, dark moody palette, clean shapes, calm empty foreground, no characters, no people, no animals, no text, no letters, no UI')
+STYLE = ('pixel art background for a Game Boy Advance RPG in the style of Mario and Luigi Superstar Saga, wide scenic view, sea and ocean theme, '
+         'rich saturated colors, dark moody palette, clean shapes, calm empty foreground, no characters, no people, no text, no letters, no UI')
 SCENES = {
-    'w0': 'a cozy mountain base camp at dusk: a canvas tent and a small campfire with a lantern in the foreground, backpacks and a map by the fire, '
-          'dark pine trees, tall snowy mountains behind, deep teal and indigo twilight sky with the first stars',
-    'w1': 'a wide rolling green prairie with soft hills, patches of yellow and white wildflowers, a winding dirt path, a few round trees, '
-          'warm late afternoon light, deep blue sky with big puffy clouds',
-    'w2': 'inside a deep enchanted forest: tall dark tree trunks in rows, teal moss, ferns, glowing fireflies, beams of pale light, '
-          'misty teal and emerald greens',
-    'w3': 'a night archipelago: many small round islands scattered on a calm dark blue sea, each island with a palm tree or a tiny lighthouse '
-          'shining, starry sky, reflections on the water',
-    'w4': 'a tall stone citadel with towers, banners and a gate on a hill, stone walls and a bridge, violet and purple dusk sky, '
-          'lit windows, distant mountains',
-    'w5': 'interior of a warm craftsman workshop: wooden workbench with tools, gears, cogs, wooden planks and a hanging oil lamp, '
-          'shelves with jars, orange and amber light, brick wall',
-    'w6': 'a dark underground cave full of large glowing pink and crimson crystals, stalactites, a still underground pool reflecting the crystals, '
-          'deep magenta shadows',
-    'w7': 'a quiet garden at twilight: trimmed hedges, a small stone fountain, cherry blossom trees with pink petals, '
-          'a gravel path and paper lanterns, soft pink and violet sky',
-    'w8': 'an immense dark abyss: floating broken rock platforms over a bottomless chasm, impossible stone stairs that loop back on themselves, '
-          'cold grey-lavender mist, faint distant lights in the depths',
-    'w9': 'a very tall ancient stone tower rising into a starry night sky with a mint green aurora, glowing mint windows spiraling up the tower, '
-          'rocky ground, distant hills',
+    'w0': 'a wooden pier at dawn over a calm sea, ropes, crates and a small rowing boat, lanterns, soft pink and teal sky reflected in the water',
+    'w1': 'a bright tropical coral reef underwater, colorful corals and sea anemones, clear turquoise water, sun rays from the surface, small bubbles',
+    'w2': 'underwater view of many large floating bubbles, each bubble containing a tiny green island with a palm tree, deep blue water, light rays',
+    'w3': 'deep ocean currents drawn as glowing streams connecting rocky outcrops, long jellyfish trailing light, an hourglass-shaped rock arch, indigo water',
+    'w4': 'a sunken wooden shipwreck lying on the sea floor, broken mast, barnacles, dim green water, scattered barrels and an anchor',
+    'w5': 'a stone lighthouse on a cliff seen from just under the sea surface, beam of light through the water, waves above, dusk colors',
+    'w6': 'an underwater cave with neat stacked stone blocks like a construction site, glowing blue crystals, a narrow opening to blue water',
+    'w7': 'open sea underwater divided into three horizontal layers of colored water, warm on top, violet in the middle, dark at the bottom, fish swimming between layers',
+    'w8': 'a quiet mangrove lagoon at dusk seen half above and half below the water line, roots in the water, four kinds of seaweed, fireflies',
+    'w9': 'a tall kelp forest underwater with impossible floating rocks and stone stairs that loop back on themselves, green and gold light',
+    'w10': 'a deep ocean abyss trench, bioluminescent creatures and glowing tube worms, dark navy water, thin threads of light connecting three rocks',
+    'w11': 'a misty foggy sea surface at dawn, blurry silhouettes of small boats fading into the fog, pale lavender and grey colors',
+    'w12': 'an underwater coral garden full of colorful fan corals in many shades from pink to purple, seahorses, soft blue light',
+    'w13': 'the open ocean far from any coast underwater, deep blue, a large school of silver fish forming a swirl, light rays',
+    'w14': 'a small sandbar island in the sea with faint ghostly outlines of animals that are not there, palm tree, calm water, moonlight',
+    'w15': 'a steady underwater current flowing over long sand dunes, sea grass all bent in the same direction, teal water',
+    'w16': 'rocky tide pools at low tide on a beach, starfish and crabs in the pools, some pools full and some half empty, golden afternoon light',
+    'w17': 'two identical ancient stone statues facing each other on the sea floor, mosaics, ruins, blue-green water and sun rays',
+    'w18': 'a perfectly still sea surface at sunset like a mirror, rocks and their reflections, pink and orange sky',
+    'w19': 'inside a large sunken galleon, wooden decks, hanging lanterns, treasure chests, dim teal water and floating dust',
+    'w20': 'an old sunken harbor underwater with stone docks, mooring posts, big anchors and chains, schools of small fish',
+    'w21': 'a cave of large glowing crystals in purple and white, some crystals being assembled like building blocks, an underwater pool',
+    'w22': 'a sea with many shimmering bands of colored water from gold to violet, bubbles and small jellyfish, dreamy light',
+    'w23': 'a lagoon at night with glowing fireflies over the water and glowing plankton in the water, mangroves, dark blue',
+    'w24': 'an underwater kelp forest with Escher-like impossible stone stairs and arches, floating rocks, green and violet light',
+    'w25': 'the deepest ocean trench at night, an anglerfish with a glowing lure, tiny glowing particles, black-blue water',
+    'w26': 'underwater sand dunes under thick fog, a heap of sand grains slowly drifting, soft beige and grey, faint sunlight',
 }
 PY = sys.executable
 

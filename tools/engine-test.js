@@ -96,6 +96,11 @@ check('K*', ['p∧¬q'], '¬(p→q)', I);
 check('K*', ['p→q'], '¬q→¬p', V);
 check('I4', [], '¬¬p⊐p', V);
 check('I4', [], '(p∧¬p)⊐q', I);
+check('I3', [], '(p∧¬p)⊐q', V);
+check('W', [], '¬(p⊐¬p)', V);
+check('W', [], '(p⊐q)⊐¬(p⊐¬q)', V);
+check('W', [], '(p∧¬p)⊐¬(p∧¬p)', V);
+check('I4', [], '¬(p⊐¬p)', I);
 /* capítulo 12 */
 check('FOL', ['∀x(Px⊃Qx)', '∀x(Qx⊃Sx)'], '∀x(Px⊃Sx)', V);
 check('FOL', [], '∀xPx⊃∃xPx', V);

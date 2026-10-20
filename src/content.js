@@ -95,10 +95,12 @@ function RULEBOOK(sys) {
           add('¬→−', 'Condicional no falso', '{¬(A→B),−i} abre {A,−j} | {¬B,−j} para cada j.');
         }
       }
-      if (sys.arr === 'I4') {
+      if (sys.cn) {
         add('⊐+', 'Condicional verdadero', '{A⊐B,+i} junto a {irj} abre {A,−j} | {B,+j}.');
         add('⊐−', 'Condicional no verdadero', '{A⊐B,−i} da {irj}, {A,+j} y {B,−j}, con j nuevo.');
-        add('¬⊐', 'Condicional falso', '{¬(A⊐B),+i} da {A,+i} y {¬B,+i}; {¬(A⊐B),−i} abre {A,−i} | {¬B,−i}.');
+        if (sys.cn === 'W') add('¬⊐', 'Condicional falso (W)', '{¬(A⊐B),±i} da {A⊐¬B,±i}, con el mismo signo.');
+        else add('¬⊐', 'Condicional falso', '{¬(A⊐B),+i} da {A,+i} y {¬B,+i}; {¬(A⊐B),−i} abre {A,−i} | {¬B,−i}.');
+        add('her.', 'Herencia', 'De {p,+i} o {¬p,+i}, junto a {irj}, pasa a lo mismo en j.');
       }
     }
   }

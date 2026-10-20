@@ -21,7 +21,11 @@ C.worlds.forEach(W => {
         trees++;
         const r = TB.solve(s.sys, s.prem.map(L.parse), L.parse(s.concl), 700);
         if (r.verdict === 'unknown') err(`${where}: el motor no decide (${r.t.nodes.length} líneas)`);
-        if (s.want && s.want !== r.verdict) err(`${where}: da ${r.verdict}, se esperaba ${s.want}`);
+        /* lo que dice el texto de salida (su primera frase) tiene que coincidir con el árbol */
+        const first = (s.outro || '').split(/[.:!]/)[0];
+        const said = s.want || (/inválid|no es una verdad|no es válid/i.test(first) ? 'invalid' : /válid|cerrado|tautología/i.test(first) ? 'valid' : null);
+        if (said && said !== r.verdict) err(`${where}: da ${r.verdict}, el texto dice ${said}`);
+        if (!said) console.log(`aviso ${where}: el texto de salida no dice si es válida (${r.verdict})`);
         if (r.t.nodes.length > 120) console.log(`aviso ${where}: árbol de ${r.t.nodes.length} líneas`);
         if (process.argv.includes('-v')) console.log(`${where}: ${r.verdict} (${r.t.nodes.length})`);
       }
