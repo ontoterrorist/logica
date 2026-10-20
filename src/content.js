@@ -92,6 +92,14 @@ function RULEBOOK(sys) {
         add('¬', 'Negación con estrella', '{¬A,+x} da {A,−x̄}; {¬A,−x} da {A,+x̄}. Si x es i, x̄ es i#, y al revés.');
       }
       if (sys.imp === 'def') add('⊃', 'Condicional material', `{A⊃B} se trata como {¬A∨B}.`);
+      if (sys.fo === 'cl' || sys.fo === 'free') {
+        const fr = sys.fo === 'free';
+        add('∀+', 'Universal verdadero', fr ? '{∀xA,+} abre {Ea,−} | {A(a),+}, para cada nombre a.' : '{∀xA,+} da {A(a),+} para cada nombre a (uno nuevo si no hay).');
+        add('∀−', 'Universal no verdadero', fr ? '{∀xA,−} da {Ec,+} y {A(c),−}, con c nuevo.' : '{∀xA,−} da {A(c),−}, con c nuevo.');
+        add('∃+', 'Particular verdadero', fr ? '{∃xA,+} da {Ec,+} y {A(c),+}, con c nuevo.' : '{∃xA,+} da {A(c),+}, con c nuevo.');
+        add('∃−', 'Particular no verdadero', fr ? '{∃xA,−} abre {Ea,−} | {A(a),−}, para cada nombre a.' : '{∃xA,−} da {A(a),−} para cada nombre a.');
+        add('¬∀', 'Cuantificadores negados', '{¬∀xA,±} da {∃x¬A,±}; {¬∃xA,±} da {∀x¬A,±}.');
+      }
       if (sys.md === 'K') {
         add('□+', 'Necesidad verdadera', '{□A,+i} junto a {irj} da {A,+j}, para cada j.');
         add('□−', 'Necesidad no verdadera', '{□A,−i} da {irj} y {A,−j}, con j nuevo.');

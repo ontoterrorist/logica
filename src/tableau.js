@@ -60,6 +60,13 @@ def('KFDEρ', 'K_FDE ρ', { W: 1, sg: 1, neg: 'fde', imp: 'def', md: 'K', R: 'ρ
 def('KK3τ', 'K_K3 τ', { W: 1, sg: 1, neg: 'fde', imp: 'def', md: 'K', cl: 'k3', R: 'τ' });
 def('KLPρ', 'K_LP ρ', { W: 1, sg: 1, neg: 'fde', imp: 'def', md: 'K', cl: 'lp', R: 'ρ' });
 def('A', 'A (Aristóteles): K3ρτ con persistencia', { W: 1, sg: 1, neg: 'fde', imp: 'def', md: 'K', cl: 'k3', R: 'ρτ', pers: 1 });
+def('QFDE', 'FDE de primer orden', { sg: 1, neg: 'fde', imp: 'def', fo: 'cl', id: 1 });
+def('QK3', 'K3 de primer orden', { sg: 1, neg: 'fde', imp: 'def', fo: 'cl', id: 1, cl: 'k3' });
+def('QLP', 'LP de primer orden', { sg: 1, neg: 'fde', imp: 'def', fo: 'cl', id: 1, cl: 'lp' });
+def('FFDE', 'FDE libre', { sg: 1, neg: 'fde', imp: 'def', fo: 'free' });
+def('FFDE−', 'FDE libre negativa', { sg: 1, neg: 'fde', imp: 'def', fo: 'free', nfree: 'neg' });
+def('FFDE0', 'FDE libre neutra', { sg: 1, neg: 'fde', imp: 'def', fo: 'free', nfree: 'neu' });
+def('QFDE*', 'FDE de primer orden con estrella', { W: 1, sg: 1, neg: 'star', imp: 'def', fo: 'cl', id: 1, ni: 1 });
 def('B', 'B (relevante básica)', { W: 1, sg: 1, neg: 'star', imp: 'def', arr: 'B', tern: 1 });
 def('DW', 'DW = B + C8', { W: 1, sg: 1, neg: 'star', imp: 'def', arr: 'B', tern: 1, R: 'C8' });
 def('CB', 'CB', { W: 1, sg: 1, neg: 'star', imp: 'def', arr: 'B', tern: 1, cond: 'C' });
@@ -244,6 +251,8 @@ function expandS(sys, n, B) {
         if (sys.imp === 'def') return [one('¬⊃', S(Not(Bin('or', Not(g.a), g.b)), s))];
         return pos ? [one('¬⊃+', S(g.a, P), S(Not(g.b), P))] : [two('¬⊃−', [S(g.a, M)], [S(Not(g.b), M)])];
       case 'iff': return [one('¬≡', S(Not(Bin('and', Bin('imp', g.a, g.b), Bin('imp', g.b, g.a))), s))];
+      case 'all': return sys.fo ? [one('¬∀', S(Qf('ex', g.v, Not(g.a)), s))] : [];
+      case 'ex': return sys.fo ? [one('¬∃', S(Qf('all', g.v, Not(g.a)), s))] : [];
       case 'box': return [one('¬□', S(Un('dia', Not(g.a)), s))];
       case 'dia': return [one('¬◇', S(Un('box', Not(g.a)), s))];
       case 'ico':
@@ -269,6 +278,17 @@ function expandS(sys, n, B) {
         ? [{ r: '⊃+', alts: [[S(f.a, M)], [S(Not(f.b), M)], [S(Bin('and', f.a, Not(f.a)), P), S(Bin('and', f.b, Not(f.b)), P)]] }]
         : [two('⊃−', [S(f.a, P), S(Not(f.b), P), S(Not(f.a), M)], [S(f.a, P), S(Not(f.b), P), S(f.b, M)])];
     case 'ex': case 'all': {
+      if (sys.fo === 'cl' || sys.fo === 'free') {   // FDE y compañía de primer orden (22.3.1, 22.4.3)
+        const I = c => inst(f.a, f.v, c), free = sys.fo === 'free';
+        const every = (f.t === 'all') === pos, sg = pos ? P : M, name = (f.t === 'all' ? '∀' : '∃') + (pos ? '+' : '−');
+        if (every) {
+          const mk = c => (free ? two(name, [S(Ex(c), M)], [S(I(c), sg)]) : one(name, S(I(c), sg)));
+          if (B.consts.size) return [...B.consts].sort().map(mk);
+          return [{ r: name, fresh: true, make: X => { const c = X.fresh(); return free ? [[S(Ex(c), M)], [S(I(c), sg)]] : [[S(I(c), sg)]]; }, sat: X => X.consts.size > 0 }];
+        }
+        return [{ r: name, fresh: true, make: X => { const c = X.fresh(); return [[...(free ? [S(Ex(c), P)] : []), S(I(c), sg)]]; },
+          sat: X => [...X.consts].some(c => X.has(S(I(c), sg)) && (!free || X.has(S(Ex(c), P)))) }];
+      }
       if (sys.fo !== 'int') return [];
       const I = c => inst(f.a, f.v, c);
       if (f.t === 'ex' && pos) return [{ r: '∃+', fresh: true, make: X => { const c = X.fresh(); return [[S(Ex(c), P), S(I(c), P)]]; },
@@ -355,6 +375,16 @@ const STRUCT = {
       B.path.forEach(n => { if (n.k === 'f' && !n.s && n.f.t === 'atom' && n.f.args.length && n.f.p !== 'E') n.f.args.forEach(a => { if (L.isConst(a)) out.push(one('NCR', F(Ex(a), n.w))); }); });
       return out;
     } },
+  'NCR±': { name: 'Restricción de neutralidad o negatividad', desc: 'De Pa₁…aₙ,+ pasa a Eaᵢ,+ (negativa); en la neutra, también de ¬Pa₁…aₙ,+.',
+    inst: (sys, B) => {
+      const out = [];
+      B.path.forEach(n => {
+        if (n.k !== 'f' || n.s !== '+') return;
+        const at = n.f.t === 'atom' ? n.f : (sys.nfree === 'neu' && n.f.t === 'not' && n.f.a.t === 'atom') ? n.f.a : null;
+        if (at && at.args.length && at.p !== 'E') at.args.forEach(a => { if (L.isConst(a)) out.push(one('NCR', F(Ex(a), n.w, '+'))); });
+      });
+      return out;
+    } },
   'SIE': { name: 'Autoidentidad de lo existente', desc: 'De Ea pasa a a=a.',
     inst: (sys, B) => B.path.filter(n => n.k === 'f' && !n.s && n.f.t === 'atom' && n.f.p === 'E').map(n => one('SIE', F(Eq(n.f.args[0], n.f.args[0]), n.w))) },
   'DI': { name: 'Dominios crecientes', desc: 'De irj y Ea,i pasa a Ea,j: lo que existe en un mundo existe en los que ve.',
@@ -369,7 +399,8 @@ const STRUCT = {
       B.path.forEach(n => {
         if (n.k !== 'f' || n.s !== (sys.sg ? '+' : '') || n.f.t !== 'atom' || n.f.p !== '=' || !n.f.args.every(L.isConst)) return;
         const [a, b] = n.f.args;
-        B.worlds.forEach(j => {
+        const ws = sys.neg === 'star' ? [...new Set(B.worlds.flatMap(w => [base(w), base(w) + '#']))] : B.worlds;
+        ws.forEach(j => {
           if (j === n.w) return;
           if (sys.nfree && !B.has(F(Ex(a), j)) && !B.has(F(Ex(b), j))) return;
           out.push(one('IIR', F(n.f, j, n.s)));
@@ -397,17 +428,18 @@ const STRUCT = {
       const out = [];
       const sg = sys.sg ? '+' : '';
       const ids = B.path.filter(n => n.k === 'f' && n.s === sg && n.f.t === 'atom' && n.f.p === '=' && n.f.args[0] !== n.f.args[1]);
-      const ats = B.path.filter(n => n.k === 'f' && n.s === sg && n.f.t === 'atom' && n.f.args.length);
+      const ats = B.path.filter(n => n.k === 'f' && n.s === sg && ((n.f.t === 'atom' && n.f.args.length) || (sys.neg === 'fde' && n.f.t === 'not' && n.f.a.t === 'atom' && n.f.a.args.length)));
       ids.forEach(e => {
         const [a, b] = e.f.args;
         ats.forEach(m => {
           if (m === e || m.w !== e.w) return;
+          const at = m.f.t === 'not' ? m.f.a : m.f, wrap = g => (m.f.t === 'not' ? Not(g) : g);
           [[a, b], [b, a]].forEach(([x, y]) => {
-            const pos = m.f.args.map((t, i) => (t === x ? i : -1)).filter(i => i >= 0);
+            const pos = at.args.map((t, i) => (t === x ? i : -1)).filter(i => i >= 0);
             for (let mask = 1; mask < (1 << pos.length); mask++) {
-              const args = m.f.args.slice();
+              const args = at.args.slice();
               pos.forEach((p, k) => { if (mask & (1 << k)) args[p] = y; });
-              out.push(one('SI', F(Atom(m.f.p, args), m.w, sg)));
+              out.push(one('SI', F(wrap(Atom(at.p, args)), m.w, sg)));
             }
           });
         });
@@ -421,7 +453,7 @@ function structOf(sys) {
   if (sys.int || sys.cn || sys.pers) ids.push('her');
   if (sys.cond === 'C+') ids.push(sys.sg ? 'CB+' : 'C+');
   if (sys.id && sys.fo) ids.push('SI');
-  if (sys.nfree) ids.push('NCR');
+  if (sys.nfree) ids.push(sys.sg ? 'NCR±' : 'NCR');
   if (sys.nfree && sys.id) ids.push('SIE');
   if (sys.di) ids.push('DI');
   if (sys.ni) ids.push('IIR', 'DSC');
@@ -777,7 +809,7 @@ function readModel(t, leaf) {
     } else {
       const atomic = f.t === 'atom', negAt = f.t === 'not' && f.a.t === 'atom';
       if (n.s === '+' && atomic) M.pos[w].add(str(g(f, w)));
-      if (n.s === '+' && negAt) M.neg[w].add(str(f.a));
+      if (n.s === '+' && negAt) M.neg[w].add(str(g(f.a, w)));
       if (n.s === '-' && atomic) (M.notpos = M.notpos || new Set()).add(w + '|' + str(f));
       if (n.s === '-' && negAt) (M.notneg = M.notneg || new Set()).add(w + '|' + str(f.a));
       if ((sys.arr === 'N4' || sys.arr === 'N*') && w !== '0') {
@@ -813,7 +845,7 @@ function readModel(t, leaf) {
   M.E = {};
   M.W.forEach(w => { M.E[w] = new Set(); });
   lits.forEach(n => { if (!n.s && n.f.t === 'atom' && n.f.p === 'E') M.E[n.w].add(find(n.f.args[0])); });
-  if (sys.fo === 'int') M.W.forEach(w => M.pos[w].forEach(a => { if (a[0] === 'E' && a.length === 2) M.E[w].add(a[1]); }));
+  if (sys.sg && (sys.fo === 'int' || sys.fo === 'free')) M.W.forEach(w => M.pos[w].forEach(a => { if (a[0] === 'E' && a.length === 2) M.E[w].add(a[1]); }));
   return M;
 }
 
@@ -863,7 +895,16 @@ function evS(sys, M, f, w) {
   const normal = M.normal.includes(w);
   const T = g => evS(sys, M, g, w);
   switch (f.t) {
-    case 'atom': return { t: M.pos[w].has(str(f)), fa: M.neg[w].has(str(f)) };
+    case 'atom': {
+      const k = str(f.args.length ? Atom(f.p, f.args.map(a => M.rep(a, w))) : f);
+      if (f.p === '=') return { t: M.rep(f.args[0], w) === M.rep(f.args[1], w), fa: M.neg[w].has(k) };
+      return { t: M.pos[w].has(k), fa: M.neg[w].has(k) };
+    }
+    case 'all': case 'ex': {
+      const D = sys.fo === 'free' ? [...M.E[w]] : M.dom;
+      const xs = D.map(d => evS(sys, M, subst(f.a, f.v, d), w));
+      return f.t === 'all' ? { t: xs.every(v => v.t), fa: xs.some(v => v.fa) } : { t: xs.some(v => v.t), fa: xs.every(v => v.fa) };
+    }
     case 'not': { const v = T(f.a); return { t: v.fa, fa: v.t }; }
     case 'and': { const a = T(f.a), b = T(f.b); return { t: a.t && b.t, fa: a.fa || b.fa }; }
     case 'or': { const a = T(f.a), b = T(f.b); return { t: a.t || b.t, fa: a.fa && b.fa }; }
@@ -901,8 +942,10 @@ function evStar(sys, M, f, w) {
     case 'atom':
       if (f.p === '=') return tv(M.rep(f.args[0], w) === M.rep(f.args[1], w));
       return tv(M.pos[w].has(str(f.args.length ? Atom(f.p, f.args.map(a => M.rep(a, w))) : f)));
-    case 'ex': return tv([...M.E[w]].some(d => evStar(sys, M, subst(f.a, f.v, d), w).t));
-    case 'all': return tv(M.W.filter(v => relOK(M, w, v)).every(v => [...M.E[v]].every(d => evStar(sys, M, subst(f.a, f.v, d), v).t)));
+    case 'ex': if (!sys.int) return tv(M.dom.some(d => evStar(sys, M, subst(f.a, f.v, d), w).t));
+      return tv([...M.E[w]].some(d => evStar(sys, M, subst(f.a, f.v, d), w).t));
+    case 'all': if (!sys.int) return tv(M.dom.every(d => evStar(sys, M, subst(f.a, f.v, d), w).t));
+      return tv(M.W.filter(v => relOK(M, w, v)).every(v => [...M.E[v]].every(d => evStar(sys, M, subst(f.a, f.v, d), v).t)));
     case 'not':
       if (sys.int) return tv(M.W.filter(v => relOK(M, w, v)).every(v => !evStar(sys, M, f.a, v).t));
       return tv(!evStar(sys, M, f.a, star(w)).t);
