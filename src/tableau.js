@@ -67,6 +67,13 @@ def('FFDE', 'FDE libre', { sg: 1, neg: 'fde', imp: 'def', fo: 'free' });
 def('FFDE−', 'FDE libre negativa', { sg: 1, neg: 'fde', imp: 'def', fo: 'free', nfree: 'neg' });
 def('FFDE0', 'FDE libre neutra', { sg: 1, neg: 'fde', imp: 'def', fo: 'free', nfree: 'neu' });
 def('QFDE*', 'FDE de primer orden con estrella', { W: 1, sg: 1, neg: 'star', imp: 'def', fo: 'cl', id: 1, ni: 1 });
+def('QK4', 'K4 de primer orden', { W: 1, sg: 1, neg: 'fde', imp: 'def', arr: 'K4', fo: 'cl' });
+def('QN4', 'N4 de primer orden', { W: 1, sg: 1, neg: 'fde', imp: 'def', arr: 'N4', fo: 'cl' });
+def('QK*', 'K* de primer orden', { W: 1, sg: 1, neg: 'star', imp: 'def', arr: 'K*', fo: 'cl' });
+def('QN*', 'N* de primer orden', { W: 1, sg: 1, neg: 'star', imp: 'def', arr: 'N*', fo: 'cl' });
+def('QI4', 'I4 de primer orden', { W: 1, sg: 1, neg: 'fde', imp: 'def', cn: 1, R: 'ρτ', fo: 'int' });
+def('QI3', 'I3 de primer orden', { W: 1, sg: 1, neg: 'fde', imp: 'def', cn: 1, cl: 'k3', R: 'ρτ', fo: 'int' });
+def('QW', 'W de primer orden', { W: 1, sg: 1, neg: 'fde', imp: 'def', cn: 'W', R: 'ρτ', fo: 'int' });
 def('B', 'B (relevante básica)', { W: 1, sg: 1, neg: 'star', imp: 'def', arr: 'B', tern: 1 });
 def('DW', 'DW = B + C8', { W: 1, sg: 1, neg: 'star', imp: 'def', arr: 'B', tern: 1, R: 'C8' });
 def('CB', 'CB', { W: 1, sg: 1, neg: 'star', imp: 'def', arr: 'B', tern: 1, cond: 'C' });
@@ -901,6 +908,11 @@ function evS(sys, M, f, w) {
       return { t: M.pos[w].has(k), fa: M.neg[w].has(k) };
     }
     case 'all': case 'ex': {
+      if (sys.cn && sys.fo === 'int') {   // negación construible con dominios crecientes (23.8)
+        const here = d => evS(sys, M, subst(f.a, f.v, d), w), acc = M.W.filter(v => relOK(M, w, v));
+        const later = key => acc.every(v => [...M.E[v]].every(d => evS(sys, M, subst(f.a, f.v, d), v)[key]));
+        return f.t === 'all' ? { t: later('t'), fa: [...M.E[w]].some(d => here(d).fa) } : { t: [...M.E[w]].some(d => here(d).t), fa: later('fa') };
+      }
       const D = sys.fo === 'free' ? [...M.E[w]] : M.dom;
       const xs = D.map(d => evS(sys, M, subst(f.a, f.v, d), w));
       return f.t === 'all' ? { t: xs.every(v => v.t), fa: xs.some(v => v.fa) } : { t: xs.some(v => v.t), fa: xs.every(v => v.fa) };

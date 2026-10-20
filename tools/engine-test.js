@@ -235,5 +235,17 @@ check('FFDE0', ['¬Pa'], 'Ea', V);
 check('FFDE−', ['¬Pa'], 'Ea', I);
 check('QLP', [], '∀x(Px∨¬Px)', V);
 check('QFDE', ['∃xPx∧∃xQx'], '∃x(Px∧Qx)', I);
+/* capítulo 23 */
+check('QN4', ['∀x(Px→Qx)'], '∃xPx→∃xQx', V);
+check('QN4', [], '∀x(Px→Qx)→(∀xPx→∀xQx)', I);
+check('QN*', ['∀x(Px→Qx)'], '∃x¬Qx→∃x¬Px', V);
+check('QN*', [], '∀x(Px→Qx)→(∃x¬Qx→∃x¬Px)', I);
+check('QK4', [], '∀x(Px→Qx)→(∀xPx→∀xQx)', V);
+check('QK*', ['∃x(Px→Qx)'], '∃xPx→¬∃xQx', I);
+check('QI4', ['∃x(¬Px∧¬Qx)'], '¬∀x(Px∨Qx)', V);
+check('QI4', ['∀x(Px⊐Qx)'], '¬∀xPx∨∀xQx', I);
+check('QI4', [], '∀xPx⊐Pa', V);
+check('QI3', ['∃x(Px∧¬Px)'], 'q', V);
+check('QI4', ['∃x(Px∧¬Px)'], 'Qa', I);
 console.log(bad ? `${bad} de ${n} fallan` : `${n} pruebas del motor, todas bien`);
 process.exit(bad ? 1 : 0);
