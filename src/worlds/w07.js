@@ -88,7 +88,7 @@ C.world({
       { q: 'Si {p} vale i, ¿cuánto vale {p∨¬p} en la supervaluación?', opts: ['1', 'i', '0'], ok: 0, why: 'En cada resolución, una de las dos disyuntas es verdadera.' },
       { q: 'En la supervaluación, ¿qué deja de valer con varias conclusiones?', opts: ['{A∨B ⊢ A, B}', '{A ⊢ A∨B}', '{A∧B ⊢ A}'], ok: 0, why: 'La disyunción puede ser superverdadera sin que lo sea ninguna disyunta.' }
     ]),
-    V('La máquina de tablas', { sys: ['K3', 'Ł3', 'LP', 'RM3', 'CL'], syms: '¬∧∨⊃≡', goals: ['valid', 'invalid', 'gap'], cmp: 'CL',
+    V('La máquina de tablas', { mv: true, sys: ['K3', 'Ł3', 'LP', 'RM3', 'CL'], syms: '¬∧∨⊃≡', goals: ['valid', 'invalid', 'gap'], cmp: 'CL',
       intro: 'Esta máquina no hace árboles: revisa todas las valuaciones con tres valores. Busca una inferencia clásica que falle en alguna de estas lógicas.',
       outro: 'Con finitos valores, la validez siempre es decidible por tablas.',
       ex: [[[], 'p∨¬p', 'invalid', 'K3'], [[], 'p∨¬p', 'valid', 'LP'], [['p∧¬p'], 'q', 'valid', 'K3'], [['p∧¬p'], 'q', 'invalid', 'LP'], [['p', 'p⊃q'], 'q', 'valid', 'RM3'], [[], 'p⊃p', 'valid', 'Ł3']] })

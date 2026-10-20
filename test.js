@@ -6,6 +6,7 @@ globalThis.window = globalThis;
 const fs = require('fs'), path = require('path');
 require('./src/logic.js'); require('./src/tableau.js'); require('./src/sem.js'); require('./src/content.js');
 fs.readdirSync(path.join(__dirname, 'src', 'worlds')).filter(f => /^w\w+\.js$/.test(f)).sort().forEach(f => require('./src/worlds/' + f));
+const Sem = globalThis.Sem;
 const C = globalThis.CONTENT, L = globalThis.Logic, TB = globalThis.Tableau, SEM = globalThis.Sem;
 C.finish();
 let bad = 0, n = 0, trees = 0;
@@ -37,7 +38,7 @@ C.worlds.forEach(W => {
       if (s.t === 'V') s.ex.forEach(e => {
         const sys = e[3] || s.sys[0];
         let v;
-        if (TB.SYS[sys]) v = TB.solve(sys, e[0].map(L.parse), L.parse(e[1]), 600).verdict;
+        if (TB.SYS[sys] && !(s.mv && Sem.MV[sys])) v = TB.solve(sys, e[0].map(L.parse), L.parse(e[1]), 600).verdict;
         else v = SEM.checkMV(sys, e[0].map(L.parse), L.parse(e[1])).v;
         if (e[2] && v !== e[2]) err(`${where}: ejemplo ${e[0].join(', ')} ⊢ ${e[1]} en ${sys} da ${v}, anotado ${e[2]}`);
       });

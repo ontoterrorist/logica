@@ -13,6 +13,12 @@ const bgDir = path.join(__dirname, 'src', 'bg');
 const bgs = fs.existsSync(bgDir) ? fs.readdirSync(bgDir).filter(f => /^w\d+\.png$/.test(f)).sort() : [];
 const bgCss = bgs.length ? ':root {\n' + bgs.map(f => `  --img-${f.slice(0, -4)}: url(data:image/png;base64,${b64(path.join(bgDir, f))});`).join('\n') + '\n}' : '';
 
+/* color de cada capítulo (en el orden del mapa): insignia, velo del fondo y cuadros de la pantalla */
+const WCOL = ['#45cfe6', '#ff8f6b', '#4d95ff', '#8f7bff', '#5cc83c', '#ffb02e', '#ad6cf5', '#ff6fa8', '#ffd54a', '#7ee081', '#3fd0c9', '#c9b8ff',
+  '#ff8fc7', '#5aa9ff', '#f2c38b', '#2fd6a8', '#ffa94d', '#9fd4ff', '#ff7a7a', '#c48b5a', '#6fa0c8', '#b48cff', '#ffcf6a', '#59e0b0', '#9ad35a', '#e06aff', '#d8d0c0'];
+const wCss = WCOL.map((c, k) => `:root { --w${k}: ${c}; }
+.screen.w${k} { --bg: color-mix(in srgb, ${c} 38%, #141236); --bg2: color-mix(in srgb, ${c} 30%, #100e2c); --bgimg: var(--img-w${k}); }`).join('\n');
+
 /* Ramón: src/pulpo/<expresión>.png y, si existen, <expresión>-blink.png y <expresión>-talk.png */
 const MOODS = ['neutral', 'happy', 'sad', 'think', 'brave'];
 const pDir = path.join(__dirname, 'src', 'pulpo');
@@ -27,7 +33,7 @@ const js = [src('logic.js'), src('tableau.js'), src('sem.js'), src('content.js')
 if (/<\/script/i.test(js)) throw new Error('el código contiene </script> y rompería la página');
 
 const html = src('index.template.html')
-  .replace('/*CSS*/', () => fontCss + '\n' + bgCss + '\n' + src('style.css'))
+  .replace('/*CSS*/', () => fontCss + '\n' + bgCss + '\n' + src('style.css') + '\n' + wCss)
   .replace('/*COMMON*/', () => src('music.js') + `\nwindow.LA_PULPO = ${JSON.stringify(pulpo)};`)
   .replace('/*MAIN*/', () => js);
 const out = path.join(__dirname, 'Logica por Arboles.html');

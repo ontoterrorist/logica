@@ -51,14 +51,27 @@ def('N*', 'N*', { W: 1, sg: 1, neg: 'star', imp: 'def', arr: 'N*' });
 def('I4', 'I4', { W: 1, sg: 1, neg: 'fde', imp: 'def', cn: 1, R: 'ρτ' });
 def('I3', 'I3', { W: 1, sg: 1, neg: 'fde', imp: 'def', cn: 1, cl: 'k3', R: 'ρτ' });
 def('W', 'W (conexiva)', { W: 1, sg: 1, neg: 'fde', imp: 'def', cn: 'W', R: 'ρτ' });
+def('KFDE', 'K_FDE (modal de cuatro valores)', { W: 1, sg: 1, neg: 'fde', imp: 'def', md: 'K' });
+def('KK3', 'K_K3', { W: 1, sg: 1, neg: 'fde', imp: 'def', md: 'K', cl: 'k3' });
+def('KLP', 'K_LP', { W: 1, sg: 1, neg: 'fde', imp: 'def', md: 'K', cl: 'lp' });
+def('KFDEρ', 'K_FDE ρ', { W: 1, sg: 1, neg: 'fde', imp: 'def', md: 'K', R: 'ρ' });
+def('KK3τ', 'K_K3 τ', { W: 1, sg: 1, neg: 'fde', imp: 'def', md: 'K', cl: 'k3', R: 'τ' });
+def('KLPρ', 'K_LP ρ', { W: 1, sg: 1, neg: 'fde', imp: 'def', md: 'K', cl: 'lp', R: 'ρ' });
+def('A', 'A (Aristóteles): K3ρτ con persistencia', { W: 1, sg: 1, neg: 'fde', imp: 'def', md: 'K', cl: 'k3', R: 'ρτ', pers: 1 });
+def('B', 'B (relevante básica)', { W: 1, sg: 1, neg: 'star', imp: 'def', arr: 'B', tern: 1 });
+def('DW', 'DW = B + C8', { W: 1, sg: 1, neg: 'star', imp: 'def', arr: 'B', tern: 1, R: 'C8' });
+def('CB', 'CB', { W: 1, sg: 1, neg: 'star', imp: 'def', arr: 'B', tern: 1, cond: 'C' });
+def('CB+', 'CB⁺', { W: 1, sg: 1, neg: 'star', imp: 'def', arr: 'B', tern: 1, cond: 'C+' });
 def('FOL', 'Primer orden clásica', { fo: 'cl', id: 1 });
 def('FREE', 'Lógica libre', { fo: 'free', id: 1 });
 
 /* ================= nodos ================= */
 const F = (f, w, s) => ({ k: 'f', f, w: w == null ? null : String(w), s: s || '' });
 const Rl = (a, b, A) => ({ k: 'r', a: String(a), b: String(b), A: A || null });
+const R3 = (a, b, c) => ({ k: 'r3', a: String(a), b: String(b), c: String(c) });
 function keyOf(n) {
   if (n.k === 'r') return 'r|' + n.a + '|' + n.b + '|' + (n.A ? str(n.A) : '');
+  if (n.k === 'r3') return 't|' + n.a + '|' + n.b + '|' + n.c;
   return 'f|' + n.s + '|' + (n.w == null ? '' : n.w) + '|' + str(n.f);
 }
 const star = x => (x.endsWith('#') ? x.slice(0, -1) : x + '#');
@@ -66,16 +79,17 @@ const base = x => (x.endsWith('#') ? x.slice(0, -1) : x);
 
 /* ================= contexto de una rama ================= */
 function ctxOf(path, sys) {
-  const keys = new Set(), worlds = [], ws = new Set(), consts = new Set(), rel = [];
+  const keys = new Set(), worlds = [], ws = new Set(), consts = new Set(), rel = [], rel3 = [];
   const addW = w => { if (w != null && !ws.has(w)) { ws.add(w); worlds.push(w); } };
   path.forEach(n => {
     keys.add(n.key);
     if (n.k === 'r') { addW(n.a); addW(n.b); rel.push(n); }
+    else if (n.k === 'r3') { addW(n.a); addW(n.b); addW(n.c); rel3.push(n); }
     else { addW(n.w); L.constsOf(n.f, consts); }
   });
   if (sys.W && !ws.has('0')) addW('0');
   return {
-    path, keys, worlds, consts, rel,
+    path, keys, worlds, consts, rel, rel3,
     has: spec => keys.has(keyOf(spec)),
     next() { let m = -1; worlds.forEach(w => { const k = parseInt(w, 10); if (k > m) m = k; }); return String(m + 1); },
     fresh() { return L.freshConst(consts); },
@@ -196,6 +210,8 @@ function expandS(sys, n, B) {
         if (sys.imp === 'def') return [one('¬⊃', S(Not(Bin('or', Not(g.a), g.b)), s))];
         return pos ? [one('¬⊃+', S(g.a, P), S(Not(g.b), P))] : [two('¬⊃−', [S(g.a, M)], [S(Not(g.b), M)])];
       case 'iff': return [one('¬≡', S(Not(Bin('and', Bin('imp', g.a, g.b), Bin('imp', g.b, g.a))), s))];
+      case 'box': return [one('¬□', S(Un('dia', Not(g.a)), s))];
+      case 'dia': return [one('¬◇', S(Un('box', Not(g.a)), s))];
       case 'ico':
         if (sys.cn === 'W') return [one(pos ? '¬⊐+' : '¬⊐−', S(Bin('ico', g.a, Not(g.b)), s))];
         return pos ? [one('¬⊐+', S(g.a, P), S(Not(g.b), P))] : [two('¬⊐−', [S(g.a, M)], [S(Not(g.b), M)])];
@@ -223,13 +239,39 @@ function expandS(sys, n, B) {
       return [{ r: '⊐−', fresh: true, make: X => { const j = X.next(); return [[Rl(x, j), S(f.a, P, j), S(f.b, M, j)]]; },
         sat: X => B.rel.some(r => r.a === x && X.has(S(f.a, P, r.b)) && X.has(S(f.b, M, r.b))) }];
     case 'arr':
+      if (sys.tern) {   // relevantes: relación ternaria; en 0 vale r0xx para todo x (regla de normalidad, implícita)
+        if (pos) {
+          if (x === '0') return worldsAll().map(j => two('→+', [S(f.a, M, j)], [S(f.b, P, j)]));
+          return B.rel3.filter(t => t.a === x).map(t => two('→+', [S(f.a, M, t.b)], [S(f.b, P, t.c)]));
+        }
+        if (x === '0') return [{ r: '→−', fresh: true, make: X => { const j = X.next(); return [[S(f.a, P, j), S(f.b, M, j)]]; },
+          sat: X => worldsAll().some(j => X.has(S(f.a, P, j)) && X.has(S(f.b, M, j))) }];
+        return [{ r: '→−', fresh: true, make: X => { const j = X.next(), k = String(+j + 1); return [[R3(x, j, k), S(f.a, P, j), S(f.b, M, k)]]; },
+          sat: X => X.rel3.some(t => t.a === x && X.has(S(f.a, P, t.b)) && X.has(S(f.b, M, t.c))) }];
+      }
       if (!normalHere) return [];
       if (pos) return worldsAll().map(j => two('→+', [S(f.a, M, j)], [S(f.b, P, j)]));
       return [{ r: '→−', fresh: true, make: X => { const j = X.next(); return [[S(f.a, P, j), S(f.b, M, j)]]; },
         sat: X => X.worlds.some(j => X.has(S(f.a, P, j)) && X.has(S(f.b, M, j))) }];
+    case 'box': case 'dia': {   // modales de muchos valores (11a): + y − como □/◇ y sus duales
+      const rel = B.rel.filter(t => t.a === x && !t.A);
+      const every = (f.t === 'box') === pos;   // □A,+ y ◇A,− miran a todos los mundos accesibles
+      const sg = pos ? P : M, name = (f.t === 'box' ? '□' : '◇') + (pos ? '+' : '−');
+      if (every) return rel.map(t => one(name, S(f.a, sg, t.b)));
+      return [{ r: name, fresh: true, make: X => { const j = X.next(); return [[Rl(x, j), S(f.a, sg, j)]]; }, sat: X => rel.some(t => X.has(S(f.a, sg, t.b))) }];
+    }
+    case 'cnd': {   // > sobre una lógica relevante (CB, CB⁺)
+      const rel = B.rel.filter(t => t.a === x && t.A && L.eq(t.A, f.a));
+      if (pos) return rel.map(t => one('>+', S(f.b, P, t.b)));
+      const plus = sys.cond === 'C+' && x === '0';
+      return [{ r: '>−', fresh: true, make: X => { const j = X.next(); return [[Rl(x, j, f.a), ...(plus ? [S(f.a, P, j)] : []), S(f.b, M, j)]]; },
+        sat: X => rel.some(t => X.has(S(f.b, M, t.b))) }];
+    }
     default: return [];
   }
 }
+
+const instKey = I => I.alts.map(a => a.map(keyOf).join('&')).join('||');
 
 /* ================= reglas estructurales ================= */
 const STRUCT = {
@@ -246,9 +288,19 @@ const STRUCT = {
       const out = [];
       B.path.forEach(n => {
         if (n.k !== 'f' || n.s !== '+') return;
-        const lit = n.f.t === 'atom' || (sys.cn && n.f.t === 'not' && n.f.a.t === 'atom');
+        const lit = n.f.t === 'atom' || ((sys.cn || sys.pers) && n.f.t === 'not' && n.f.a.t === 'atom');
         if (lit) B.rel.forEach(r => { if (r.a === n.w && r.b !== n.w) out.push(one('her', F(n.f, r.b, '+'))); });
       });
+      return out;
+    } },
+  'C8': { name: 'Condición C8', desc: 'De rxyz pasa a rxz̄ȳ (x̄ es la pareja estrella de x).',
+    inst: (sys, B) => B.rel3.map(t => one('C8', R3(t.a, star(t.c), star(t.b)))) },
+  'CB+': { name: 'Centrado en 0', desc: 'Para cada antecedente A de un condicional {>}: o bien A,−0, o bien A,+0 y 0 r_A 0.',
+    inst: (sys, B) => {
+      const ants = new Map();
+      B.path.forEach(n => { if (n.k === 'f') { const g = n.f.t === 'not' ? n.f.a : n.f; if (g.t === 'cnd') ants.set(str(g.a), g.a); } });
+      const out = [];
+      ants.forEach(A => out.push(two('CB+', [F(A, '0', '-')], [F(A, '0', '+'), Rl('0', '0', A)])));
       return out;
     } },
   'C+': { name: 'Centrado', desc: 'Para cada mundo i y cada antecedente A de un condicional: o bien ¬A,i, o bien A,i e i r_A i.',
@@ -282,9 +334,10 @@ const STRUCT = {
     } }
 };
 function structOf(sys) {
-  const ids = [...sys.R];
-  if (sys.int || sys.cn) ids.push('her');
-  if (sys.cond === 'C+') ids.push('C+');
+  const ids = [...sys.R.replace('C8', '')];
+  if (sys.R.includes('C8')) ids.push('C8');
+  if (sys.int || sys.cn || sys.pers) ids.push('her');
+  if (sys.cond === 'C+') ids.push(sys.sg ? 'CB+' : 'C+');
   if (sys.id && sys.fo) ids.push('SI');
   return ids;
 }
@@ -371,18 +424,30 @@ class Tab {
     return out;
   }
   /* aplica la regla de la línea n en todas las ramas abiertas que pasan por ella */
-  apply(id) {
+  /* aplica la regla de la línea n en todas las ramas abiertas que pasan por ella. Si la regla ramifica y hay
+     varios mundos (o nombres) a los que aplicarla, se aplica a uno solo, el elegido (pick): así el árbol no se
+     multiplica de golpe y se puede ir cerrando rama a rama, como en el libro */
+  choices(n) {
+    const seen = new Map();
+    this.pending(n).forEach(({ I }) => { if (!I.fresh && I.alts.length > 1) { const k = instKey(I); if (!seen.has(k)) seen.set(k, I); } });
+    return [...seen.entries()].map(([key, I]) => ({ key, I }));
+  }
+  apply(id, pick) {
     const n = this.node(id);
     if (!n) return { error: 'Esa línea no existe.' };
     if (n.k !== 'f') return { error: 'Las líneas de la forma irj no tienen regla propia: las usan □, las reglas de la relación y otras.' };
     const todo = this.pending(n);
     if (!todo.length) return { error: this.whyNot(n) };
+    const ch = this.choices(n);
+    if (pick == null && ch.length > 1) return { need: 'choice', options: ch };
+    if (pick == null && ch.length === 1) pick = ch[0].key;
     let added = 0, rule = todo[0].I.r;
     const leaves = [...new Set(todo.map(t => t.leaf))];
     leaves.forEach(leaf => {
       let tips = [leaf];
       const B0 = this.ctx(leaf);
       expand(this.sys, n, B0).forEach(I => {
+        if (pick != null && !I.fresh && I.alts.length > 1 && instKey(I) !== pick) return;
         const next = [];
         tips.forEach(tip => {
           const B = this.ctx(tip);
@@ -524,12 +589,15 @@ function nextMove(t) {
   t.openLeaves().forEach(leaf => {
     if (leaf.decl) return;
     const B = t.ctx(leaf);
+    /* una alternativa «cierra ya» si alguna de sus líneas choca con algo de la rama */
+    const closes = alt => alt.some(sp => sp.k === 'f' && B.path.some(m => clash(t.sys, Object.assign({}, sp), m)));
     B.path.forEach(n => expand(t.sys, n, B).forEach(I => {
       if (t.sat(I, B, n.id)) return;
-      const reuse = ['□', '∀', '[F]', '[P]', '>', '→+', '¬→−', '⊐+', '¬+'].includes(I.r);
+      const reuse = ['□', '∀', '[F]', '[P]', '>', '>+', '→+', '¬→−', '⊐+', '¬+'].includes(I.r);
       const br = !I.fresh && I.alts.length > 1;
-      const pr = I.fresh ? 3 : br ? (reuse ? 5 : 4) : (reuse ? 2 : 0);
-      cands.push({ pr, kind: 'rule', id: n.id, depth: B.path.indexOf(n) });
+      let pr = I.fresh ? 3 : br ? (reuse ? 5 : 4) : (reuse ? 2 : 0);
+      if (br) { const c = I.alts.filter(closes).length; if (c === I.alts.length) pr = -1; else if (c) pr -= 2.5; }
+      cands.push({ pr, kind: 'rule', id: n.id, depth: B.path.indexOf(n), pick: br ? instKey(I) : null });
     }));
     structOf(t.sys).forEach(rid => STRUCT[rid].inst(t.sys, B).forEach(I => {
       if (t.sat(I, B, null)) return;
@@ -543,7 +611,7 @@ function nextMove(t) {
 }
 function doMove(t, m) {
   if (m.kind === 'close') return t.tryClose(m.ids[0], m.ids[1]);
-  if (m.kind === 'rule') return t.apply(m.id);
+  if (m.kind === 'rule') return t.apply(m.id, m.pick);
   return t.applyStruct(m.rid);
 }
 /* construye el árbol entero; budget = máximo de líneas */
@@ -625,18 +693,19 @@ function readModel(t, leaf) {
     }));
   }
   path.forEach(n => { if (n.k === 'r') (n.A ? M.RA : M.R).push(n.A ? [n.a, n.b, str(n.A)] : [n.a, n.b]); });
+  M.R3 = path.filter(n => n.k === 'r3').map(n => [n.a, n.b, n.c]);
   if (sys.md === 'U' && !sys.cond) M.W.forEach(a => M.W.forEach(b => M.R.push([a, b])));
   if (sys.cond) M.W.forEach(a => M.W.forEach(b => M.R.push([a, b])));
-  if (sys.int || sys.cn) {   // la relación de un modelo intuicionista es reflexiva y transitiva, y hay herencia
+  if (sys.int || sys.cn || sys.pers) {   // la relación de un modelo intuicionista es reflexiva y transitiva, y hay herencia
     const has = (a, b) => M.R.some(r => r[0] === a && r[1] === b);
     M.W.forEach(w => { if (!has(w, w)) M.R.push([w, w]); });
     for (let ch = true; ch;) { ch = false; M.R.slice().forEach(([a, b]) => M.R.slice().forEach(([c, d]) => { if (b === c && !has(a, d)) { M.R.push([a, d]); ch = true; } })); }
-    M.R.forEach(([a, b]) => { M.pos[a].forEach(p => M.pos[b].add(p)); if (sys.cn) M.neg[a].forEach(p => M.neg[b].add(p)); });
+    M.R.forEach(([a, b]) => { M.pos[a].forEach(p => M.pos[b].add(p)); if (sys.cn || sys.pers) M.neg[a].forEach(p => M.neg[b].add(p)); });
   }
   M.normal = M.W.filter(w => {
     if (sys.nn === 'L') return w === '0';
     if (sys.nn === 'N') return w === '0' || B.boxed(w);
-    if (sys.arr === 'N4' || sys.arr === 'N*') return w === '0';
+    if (sys.arr === 'N4' || sys.arr === 'N*' || sys.tern) return w === '0';
     return true;
   });
   M.E = {};
@@ -702,6 +771,10 @@ function evS(sys, M, f, w) {
       return { t: a.fa || b.t, fa: a.t && b.fa };
     }
     case 'iff': return T(Bin('and', Bin('imp', f.a, f.b), Bin('imp', f.b, f.a)));
+    case 'box': case 'dia': {
+      const acc = M.W.filter(v => relOK(M, w, v)).map(v => evS(sys, M, f.a, v));
+      return f.t === 'box' ? { t: acc.every(v => v.t), fa: acc.some(v => v.fa) } : { t: acc.some(v => v.t), fa: acc.every(v => v.fa) };
+    }
     case 'ico': {   // negación construible (I4, I3) y la conexiva W
       const acc = M.W.filter(v => relOK(M, w, v));
       const a = T(f.a), b = T(f.b);
@@ -731,8 +804,15 @@ function evStar(sys, M, f, w) {
     case 'imp': return tv(!val(f.a) || val(f.b));   // ⊃ definido como ¬A ∨ B solo fuera de la intuicionista
     case 'ico': return tv(M.W.filter(v => relOK(M, w, v)).every(v => !evStar(sys, M, f.a, v).t || evStar(sys, M, f.b, v).t));
     case 'arr':
+      if (sys.tern && w !== '0') return tv(M.R3.filter(t => t[0] === w).every(t => !evStar(sys, M, f.a, t[1]).t || evStar(sys, M, f.b, t[2]).t));
       if (!normal) return tv(!!M.fixed[w]['1' + str(f)]);
       return tv(M.W.every(v => !evStar(sys, M, f.a, v).t || evStar(sys, M, f.b, v).t));
+    case 'cnd': {
+      const A = str(f.a), mentioned = M.RA.some(t => t[2] === A);
+      const sel = mentioned ? M.W.filter(v => M.RA.some(t => t[0] === w && t[1] === v && t[2] === A))
+        : sys.cond === 'C+' && w === '0' ? M.W.filter(v => evStar(sys, M, f.a, v).t) : [];
+      return tv(sel.every(v => evStar(sys, M, f.b, v).t));
+    }
     default: throw new Error('sin semántica: ' + f.t);
   }
 }

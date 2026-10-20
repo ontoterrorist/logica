@@ -101,6 +101,36 @@ check('W', [], '¬(p⊐¬p)', V);
 check('W', [], '(p⊐q)⊐¬(p⊐¬q)', V);
 check('W', [], '(p∧¬p)⊐¬(p∧¬p)', V);
 check('I4', [], '¬(p⊐¬p)', I);
+/* capítulo 10 */
+check('B', ['p→q'], '(q→r)→(p→r)', V);
+check('B', [], 'p→((p→q)→q)', I);
+check('B', [], 'p→p', V);
+check('B', [], '(p∧q)→p', V);
+check('B', [], '¬¬p→p', V);
+check('B', ['p', 'p→q'], 'q', V);
+check('B', ['p→¬q'], 'q→¬p', V);
+check('B', [], '(p→¬q)→(q→¬p)', I);
+check('DW', [], '(p→¬q)→(q→¬p)', V);
+check('B', [], '((p→q)∧(p→r))→(p→(q∧r))', V);
+check('B', ['p→q'], '(r→p)→(r→q)', V);
+check('B', [], 'q→(p→p)', I);
+check('B', [], '(p∧¬p)→q', I);
+check('CB', ['p>q'], 'p>(q∨r)', V);
+check('CB+', [], '(p∧¬p)>q', I);
+check('CB+', ['p', 'p>q'], 'q', V);
+check('CB', ['p', 'p>q'], 'q', I);
+/* apéndice 11a */
+check('KFDE', ['□p∧¬□q'], '◇(p∧¬q)', V);
+check('KFDE', ['□(p⊃q)', '◇p'], '◇q', I);
+check('KK3', ['□(p⊃q)', '◇p'], '◇q', V);
+check('KK3τ', ['□p'], '□□p', V);
+check('KLPρ', ['□p'], 'p', V);
+check('KFDE', [], '□(p∨¬p)', I);
+check('KLP', [], '□(p∨¬p)', V);
+check('A', ['p'], '□p', V);
+check('A', ['¬p'], '□¬p', V);
+check('A', [], 'p∨¬p', I);
+check('A', [], '□(p∨¬p)', I);
 /* capítulo 12 */
 check('FOL', ['∀x(Px⊃Qx)', '∀x(Qx⊃Sx)'], '∀x(Px⊃Sx)', V);
 check('FOL', [], '∀xPx⊃∃xPx', V);

@@ -85,6 +85,14 @@ function RULEBOOK(sys) {
         add('¬', 'Negación con estrella', '{¬A,+x} da {A,−x̄}; {¬A,−x} da {A,+x̄}. Si x es i, x̄ es i#, y al revés.');
       }
       if (sys.imp === 'def') add('⊃', 'Condicional material', `{A⊃B} se trata como {¬A∨B}.`);
+      if (sys.md === 'K') {
+        add('□+', 'Necesidad verdadera', '{□A,+i} junto a {irj} da {A,+j}, para cada j.');
+        add('□−', 'Necesidad no verdadera', '{□A,−i} da {irj} y {A,−j}, con j nuevo.');
+        add('◇+', 'Posibilidad verdadera', '{◇A,+i} da {irj} y {A,+j}, con j nuevo.');
+        add('◇−', 'Posibilidad no verdadera', '{◇A,−i} junto a {irj} da {A,−j}, para cada j.');
+        add('¬□', 'Conmutar', '{¬□A,±i} da {◇¬A,±i}; {¬◇A,±i} da {□¬A,±i}.');
+        if (sys.pers) add('her.', 'Persistencia', 'De {p,+i} o {¬p,+i}, junto a {irj}, pasa a lo mismo en j.');
+      }
       if (sys.imp === 'L3') add('⊃', 'Condicional de Ł3', '{A⊃B,+} abre tres ramas: {¬A,+} | {B,+} | {A∨¬A,−} y {B∨¬B,−}. {A⊃B,−} da {¬A,−} y {B,−}, y abre {A,+} | {¬B,+}.');
       if (sys.imp === 'RM3') add('⊃', 'Condicional de RM3', '{A⊃B,+} abre tres ramas: {A,−} | {¬B,−} | {A∧¬A,+} y {B∧¬B,+}. {A⊃B,−} da {A,+} y {¬B,+}, y abre {¬A,−} | {B,−}.');
       if (sys.arr === 'K4' || sys.arr === 'N4' || sys.arr === 'K*' || sys.arr === 'N*') {

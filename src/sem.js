@@ -6,7 +6,8 @@
 const L = root.Logic;
 
 const K3T = { not: a => 1 - a, and: Math.min, or: Math.max, imp: (a, b) => Math.max(1 - a, b) };
-const LUK = Object.assign({}, K3T, { imp: (a, b) => Math.min(1, 1 - a + b) });
+const r4 = x => Math.round(x * 10000) / 10000;
+const LUK = Object.assign({}, K3T, { not: a => r4(1 - a), imp: (a, b) => Math.min(1, r4(1 - a + b)) });
 const RM3T = Object.assign({}, K3T, { imp: (a, b) => (a <= b ? Math.max(1 - a, b) : 0) });
 const MV = {
   CL: { name: 'Lógica clásica', vals: [1, 0], des: [1], ops: K3T },
@@ -15,6 +16,9 @@ const MV = {
   LP: { name: 'LP (lógica de la paradoja)', vals: [1, 0.5, 0], des: [1, 0.5], ops: K3T },
   RM3: { name: 'RM3', vals: [1, 0.5, 0], des: [1, 0.5], ops: RM3T },
   'Ł5': { name: 'Łukasiewicz con cinco valores', vals: [1, 0.75, 0.5, 0.25, 0], des: [1], ops: LUK },
+  /* la lógica difusa L del capítulo 11: valores en [0, 1]; es válida si el mínimo de las premisas nunca supera a la
+     conclusión. El juego explora una cuadrícula de valores (de cuarto en cuarto a mano, de décimo en décimo en la máquina) */
+  'Ł': { name: 'L (Łukasiewicz continua)', vals: [1, 0.75, 0.5, 0.25, 0], grid: [1, 0.9, 0.8, 0.7, 0.6, 0.5, 0.4, 0.3, 0.2, 0.1, 0], des: [1], ops: LUK, glb: true },
   FDE: { name: 'FDE (cuatro valores)', vals: ['1', 'b', 'n', '0'], des: ['1', 'b'], four: true }
 };
 /* FDE: cada valor es un par (verdadera, falsa) */
@@ -54,9 +58,21 @@ function valuations(sys, atoms) {
   return out;
 }
 /* validez por tablas: devuelve el primer contraejemplo, si lo hay */
+/* contraejemplo para L: la conclusión vale menos que alguna premisa (menos que 1 si no hay premisas) */
+const glbFails = (sys, prem, concl, v) => evMV(sys, concl, v) < Math.min(1, ...prem.map(f => evMV(sys, f, v))) - 1e-9;
 function checkMV(sys, prem, concl) {
   const atoms = L.atomsOf([...prem, concl]);
-  if (Math.pow(MV[sys].vals.length, atoms.length) > 4000) return { v: 'unknown', how: 'big' };
+  const S = MV[sys];
+  if (S.glb) {
+    const grid = S.grid, n = Math.pow(grid.length, atoms.length);
+    if (n > 15000) return { v: 'unknown', how: 'big' };
+    const rows = [];
+    const go = (i, v) => { if (i === atoms.length) { rows.push(Object.assign({}, v)); return; } grid.forEach(x => { v[atoms[i]] = x; go(i + 1, v); }); };
+    go(0, {});
+    for (const v of rows) if (glbFails(sys, prem, concl, v)) return { v: 'invalid', model: { kind: 'val', atoms, vals: v }, rows: rows.length };
+    return { v: 'valid', how: 'grid', rows: rows.length };
+  }
+  if (Math.pow(S.vals.length, atoms.length) > 4000) return { v: 'unknown', how: 'big' };
   const rows = valuations(sys, atoms);
   for (const v of rows) {
     if (prem.every(f => designated(sys, evMV(sys, f, v))) && !designated(sys, evMV(sys, concl, v))) return { v: 'invalid', model: { kind: 'val', atoms, vals: v }, rows: rows.length };
@@ -69,8 +85,8 @@ function vname(sys, x) {
   if (x === 1) return '1';
   if (x === 0) return '0';
   if (MV[sys].vals.length === 3) return 'i';
-  return String(x).replace('0.', ',').replace(',', '0,');
+  return String(x).replace('.', ',');
 }
 
-root.Sem = { MV, evMV, ev4, designated, valuations, checkMV, vname };
+root.Sem = { MV, evMV, ev4, designated, valuations, checkMV, vname, glbFails };
 })(typeof window !== 'undefined' ? window : globalThis);

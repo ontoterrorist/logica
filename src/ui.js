@@ -129,6 +129,7 @@ function songFor() {
 let V = { scr: 'title', w: 0, s: 0 };
 let ST = null;
 let FD = null;
+let PK = null;     // elección de mundo pendiente
 let twTimer = null;
 let lastTw = null;
 
@@ -390,6 +391,7 @@ function twDone() {
 const IDLE = 'Toca una línea y pulsa <b>Aplicar regla</b>. Para cerrar una rama, toca dos líneas que choquen y pulsa <b>Cerrar</b>.';
 const wl = w => (w == null ? '' : w.endsWith('#') ? w.slice(0, -1) + '#' : w);
 function nodeText(n) {
+  if (n.k === 'r3') return `<span class="trel"><i>r</i>${[n.a, n.b, n.c].map(x => esc(wl(x))).join(' ')}</span>`;
   if (n.k === 'r') return `<span class="trel">${esc(n.a)}<i>r</i>${n.A ? `<sub>${fh(n.A)}</sub>` : ''}${esc(n.b)}</span>`;
   const lab = n.s ? (n.s === '-' ? '−' : '+') + (n.w == null ? '' : wl(n.w)) : (n.w == null ? '' : wl(n.w));
   return fh(n.f) + (lab !== '' ? `<span class="tl">, ${esc(lab)}</span>` : '');
@@ -509,6 +511,24 @@ function finish(stars) {
   persist();
   sfx.win();
 }
+/* aplica la regla de una línea; si hay que elegir mundo o nombre, pregunta */
+function applyRule(id, pick) {
+  const probe = ST.tab.choices(ST.tab.node(id));
+  if (pick == null && probe.length > 1) {
+    const lab = alt => alt.map(nodeText).join(', ');
+    showModal(`<h3>¿Con qué mundo o nombre aplicas la regla de la línea ${id}?</h3><p class="cap">La regla abre dos ramas para cada uno; elige uno por vez.</p>
+      <div class="choices">${probe.map((o, i) => `<button class="btn chopt" data-act="tpick" data-i="${i}">${o.I.alts.map(lab).join(' <b class="bar">|</b> ')}</button>`).join('')}</div>
+      <div class="mrow"><button class="btn" data-act="mcancel">Cancelar</button></div>`);
+    PK = { picks: probe.map(o => o.key), id };
+    return;
+  }
+  closeModal();
+  snapshot();
+  const before = ST.tab.nodes.length;
+  const r = ST.tab.apply(id, pick);
+  ST.flash = r.ok ? before + 1 : null;
+  after(r);
+}
 function hintText(t) {
   const m = TB.nextMove(t);
   if (!m) {
@@ -586,7 +606,8 @@ function modelHTML(sys, M, prem, concl) {
     });
     const R = sys.md === 'U' || sys.cond ? [] : M.R;
     body = modelDiagram({ W: M.W, R, RA: M.RA, lits, nn: M.W.filter(w => !M.normal.includes(w)), root: '0', names: Object.fromEntries(M.W.map(w => [w, worldName(w)])), star: sys.neg === 'star' })
-      + `<p class="cap">${sys.md === 'U' || sys.cond ? 'Todos los mundos se ven entre sí. ' : ''}${M.W.some(w => !M.normal.includes(w)) ? 'Con borde punteado: mundos no normales. ' : ''}${sys.neg === 'star' ? 'w0* es el mundo estrella de w0. ' : ''}Lo que no figura en un mundo es falso allí${sys.sg && !sys.int ? ' (o «no verdadero»)' : ''}.</p>`;
+      + (M.R3 && M.R3.length ? `<p class="cap">Relación ternaria: ${M.R3.map(t => 'R(' + t.map(worldName).join(', ') + ')').join(' · ')}; además, R(w0, x, x) para todo x.</p>` : '')
+      + `<p class="cap">${(sys.md === 'U' || sys.cond) && !sys.tern ? 'Todos los mundos se ven entre sí. ' : ''}${M.W.some(w => !M.normal.includes(w)) ? 'Con borde punteado: mundos no normales. ' : ''}${sys.neg === 'star' ? 'w0* es el mundo estrella de w0. ' : ''}Lo que no figura en un mundo es falso allí${sys.sg && !sys.int ? ' (o «no verdadero»)' : ''}.</p>`;
   }
   const val = f => vchip(TB.valueAt(sys, M, f));
   return `<div class="mlabel">CONTRAMODELO</div>${body}
@@ -658,6 +679,19 @@ function scrModel() {
       <td class="want ${good ? 'good' : 'no'}">${ico(good ? 'check' : 'cross')}<span>${want ? 'debe ser designada' : 'no debe ser designada'}</span></td></tr>`;
   }).join('');
   ST.all = all;
+  if (S.glb) {   // L: no hay designados fijos; la conclusión tiene que quedar por debajo del mínimo de las premisas
+    const mins = Math.min(1, ...ST.prem.map(f => SEM.evMV(s.sys, f, ST.val))), cv = SEM.evMV(s.sys, ST.goal, ST.val);
+    ST.all = SEM.glbFails(s.sys, ST.prem, ST.goal, ST.val);
+    const rows2 = [...ST.prem.map(f => ['Premisa', f]), ['Conclusión', ST.goal]].map(([lab, f]) => `<tr><td class="lab">${lab}</td><td>${fh(f)}</td><td>${vchip2(s.sys, SEM.evMV(s.sys, f, ST.val))}</td></tr>`).join('');
+    return `<div class="proof">${goalHTML('CONTRAEJEMPLO', ST.prem, ST.goal, '⊬', S.name)}
+      <div class="cols"><div class="panel model">
+        <div class="mlabel">VALORES</div>
+        <div class="vals">${ST.atoms.map(a => `<div class="vrow"><span class="fm">${esc(a)}</span><span class="seg">${S.vals.map(v => `<button class="vbtn ${vcls(v)}${ST.val[a] === v ? ' on' : ''}" data-act="val" data-a="${a}" data-v="${v}" aria-pressed="${ST.val[a] === v}">${esc(SEM.vname(s.sys, v))}</button>`).join('')}</span></div>`).join('')}</div>
+        <div class="mlabel">RESULTADO</div>
+        <div class="tw"><table class="tbl vt"><tbody>${rows2}</tbody></table></div>
+        <p class="cap">${ST.prem.length ? 'Mínimo de las premisas' : 'Sin premisas, el listón es'}: <b>${SEM.vname(s.sys, mins)}</b> · conclusión: <b>${SEM.vname(s.sys, cv)}</b> · ${ST.all ? '<b class="good">¡la conclusión queda por debajo!</b>' : 'la conclusión tiene que quedar por debajo'}</p>
+      </div><div class="side">${sayBox(ST.msg, true)}</div></div></div>`;
+  }
   return `<div class="proof">
     ${sat ? `<div class="goal panel"><span class="gtag">QUE VALGAN</span><span class="seq">${ST.prem.map(fh).join('<span class="comma">,</span> ')}</span><span class="sys">${esc(S.name)}</span></div>` : goalHTML('CONTRAEJEMPLO', ST.prem, ST.goal, '⊬', S.name)}
     <div class="cols">
@@ -707,7 +741,8 @@ const GOALTXT = {
 };
 const argKey = (prem, concl) => prem.map(L.str).sort().join(',') + '⊢' + L.str(concl);
 const labEx = e => ({ prem: e[0].map(L.parse), concl: L.parse(e[1]), sys: e[3] });
-const isMV = id => !TB.SYS[id] && !!SEM.MV[id];
+/* en la máquina de un capítulo de tablas (mv: true) se usan las tablas aunque el sistema también tenga árboles */
+const isMV = id => !!SEM.MV[id] && (!TB.SYS[id] || !!(ST && ST.stage && ST.stage.mv));
 function scrLab() {
   const s = ST.stage, off = ST.busy ? 'disabled' : '';
   const sysSel = `<span class="sysset">${s.sys.map(x => `<button class="btn sm${x === ST.sys ? ' on' : ''}" data-act="vsys" data-x="${esc(x)}" aria-pressed="${x === ST.sys}" title="${esc(sysName(x))}" ${off}>${esc(x)}</button>`).join('')}</span>`;
@@ -749,6 +784,7 @@ function labResult() {
 }
 function labSay(r) {
   if (isMV(ST.sys)) {
+    if (r.v === 'valid' && r.how === 'grid') return `Ninguna de las ${r.rows} valuaciones de la cuadrícula (de décimo en décimo) la refuta. Es un buen indicio de validez, aunque no una prueba: en L los valores son infinitos.`;
     if (r.v === 'valid') return `¡Válida! Revisé las ${r.rows} valuaciones: en ninguna las premisas son designadas y la conclusión no.`;
     if (r.v === 'invalid') return 'Inválida. Con estos valores las premisas son designadas y la conclusión no.';
     return 'Son demasiadas letras para revisar la tabla entera.';
@@ -962,11 +998,7 @@ const ACT = {
   trule() {
     const ns = selNodes();
     if (ns.length !== 1) { sfx.err(); say('err', 'Toca primero una sola línea: la que quieres desarrollar.'); render(); return; }
-    snapshot();
-    const before = ST.tab.nodes.length;
-    const r = ST.tab.apply(ns[0].id);
-    ST.flash = r.ok ? before + 1 : null;
-    after(r);
+    applyRule(ns[0].id, null);
   },
   tclose() {
     const ns = selNodes();
@@ -990,6 +1022,7 @@ const ACT = {
     ST.flash = r.ok ? before + 1 : null;
     after(r);
   },
+  tpick(d) { applyRule(PK.id, PK.picks[+d.i]); },
   undo() { if (!ST.hist.length) return; ST.tab = ST.hist.pop(); ST.sel = []; ST.flash = null; ST.model = null; say('info', IDLE); sfx.page(); render(); },
   reset() { ST.tab = new TB.Tab(ST.stage.sys, ST.prem, ST.concl); ST.hist = []; ST.sel = []; ST.flash = null; ST.model = null; say('info', tx(ST.stage.intro || IDLE)); sfx.page(); render(); },
   hint() {
