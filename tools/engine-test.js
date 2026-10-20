@@ -186,5 +186,22 @@ check('CK≈', [], '∀x∀y((◇x=y∧Px)⊃Py)', I);
 check('CK≈', ['a=b', '□a=a'], '□a=b', I);
 check('CK=', ['a=b', '□a=a'], '□a=b', V);
 check('CK≈', ['Pa'], '∃xPx', V);
+/* capítulo 18 */
+check('CL', [], '∀x□Px⊃□Pa', V);
+check('CL', [], '□(∃x◇(Px∧Qx)⊃∃x◇Px)', I);
+check('VL', [], '□(∃x□Px⊃∃xPx)', I);
+check('CN', [], '∀x□Px⊃∀x□(Qx∨□Qx)', I);
+check('CLρ', [], '□(◇∃xPx⊃¬◇∃xQx)', I);
+check('CN', ['∀x□(Px⊃Qx)', '□Pa'], '□Qa', V);
+/* capítulo 19 */
+check('CC', ['p>Pa'], 'p>∃xPx', V);
+check('CC', ['∀x(Px>Qx)'], '∀xPx>∀xQx', I);
+check('VC', ['∀x(p>Px)'], '∀x(p>(Px∨Qx))', V);
+check('VC', ['∀x(Px>Sx)'], '∀x((Px∧Qx)>Sx)', I);
+check('VC+', ['Ea', 'Pa', '∀x(Px>Qx)'], 'Qa', V);
+check('CC+', ['∀x□(Px⊃Qx)'], '∀x(Px>Qx)', V);
+check('CC+', ['∀xQx'], '∀x(Px>Qx)', I);
+check('CC', [], '∀xPx>Pa', I);
+check('CC+', [], '∀xPx>Pa', V);
 console.log(bad ? `${bad} de ${n} fallan` : `${n} pruebas del motor, todas bien`);
 process.exit(bad ? 1 : 0);

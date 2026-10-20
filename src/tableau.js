@@ -64,6 +64,16 @@ def('CB', 'CB', { W: 1, sg: 1, neg: 'star', imp: 'def', arr: 'B', tern: 1, cond:
 def('CB+', 'CB⁺', { W: 1, sg: 1, neg: 'star', imp: 'def', arr: 'B', tern: 1, cond: 'C+' });
 def('FOL', 'Primer orden clásica', { fo: 'cl', id: 1 });
 def('CK', 'CK (dominio constante)', { W: 1, md: 'K', fo: 'cl' });
+def('CC', 'CC: C de dominio constante', { W: 1, md: 'U', cond: 'C', fo: 'cl' });
+def('VC', 'VC: C de dominio variable', { W: 1, md: 'U', cond: 'C', fo: 'var' });
+def('CC+', 'CC⁺', { W: 1, md: 'U', cond: 'C+', fo: 'cl' });
+def('VC+', 'VC⁺', { W: 1, md: 'U', cond: 'C+', fo: 'var' });
+def('CL', 'CL: L de dominio constante', { W: 1, md: 'K', nn: 'L', fo: 'cl' });
+def('CLρ', 'CLρ', { W: 1, md: 'K', nn: 'L', fo: 'cl', R: 'ρ' });
+def('VL', 'VL: L de dominio variable', { W: 1, md: 'K', nn: 'L', fo: 'var' });
+def('CN', 'CN: N de dominio constante', { W: 1, md: 'K', nn: 'N', fo: 'cl' });
+def('VN', 'VN: N de dominio variable', { W: 1, md: 'K', nn: 'N', fo: 'var' });
+def('CNρ', 'CNρ (S2 cuantificada)', { W: 1, md: 'K', nn: 'N', fo: 'cl', R: 'ρ' });
 def('CK≈', 'CK(CI): identidad contingente', { W: 1, md: 'K', fo: 'cl', id: 1, ci: 1 });
 def('CS5≈', 'CS5(CI)', { W: 1, md: 'U', fo: 'cl', id: 1, ci: 1 });
 def('VK≈', 'VK(CI)', { W: 1, md: 'K', fo: 'var', id: 1, ci: 1 });
