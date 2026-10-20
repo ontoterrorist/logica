@@ -38,5 +38,6 @@ const html = src('index.template.html')
   .replace('/*MAIN*/', () => js);
 const out = path.join(__dirname, 'Logica por Arboles.html');
 fs.writeFileSync(out, html);
+fs.writeFileSync(path.join(__dirname, 'index.html'), html);   // GitHub Pages
 console.log(`${out} ${Math.round(html.length / 1024)} KB · ${bgs.length} fondos · ${Object.keys(pulpo).length} expresiones de Ramón`);
 module.exports = { html };
