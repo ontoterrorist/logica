@@ -291,7 +291,7 @@ function enterStage() {
   }
   if (s.t === 'M') {
     const prem = s.prem.map(L.parse), goal = s.concl ? L.parse(s.concl) : null, val = {};
-    const atoms = L.atomsOf(goal ? [...prem, goal] : prem);
+    const atoms = s.dom ? SEM.groundAtoms(goal ? [...prem, goal] : prem, s.dom) : L.atomsOf(goal ? [...prem, goal] : prem);
     atoms.forEach(a => { val[a] = SEM.MV[s.sys].vals[0]; });
     ST = { type: 'M', stage: s, prem, goal, atoms, val, moves: 0, msg: { k: 'info', h: tx(s.intro) } };
   }
@@ -674,16 +674,16 @@ function scrModel() {
   const rowsF = sat ? ST.prem.map(f => ['Fórmula', f, true]) : [...ST.prem.map(f => ['Premisa', f, true]), ['Conclusión', ST.goal, false]];
   let all = true;
   const rows = rowsF.map(([lab, f, want]) => {
-    const v = SEM.evMV(s.sys, f, ST.val), good = des(v) === want;
+    const v = SEM.evMV(s.sys, f, ST.val, s.dom), good = des(v) === want;
     if (!good) all = false;
     return `<tr><td class="lab">${lab}</td><td>${fh(f)}</td><td>${vchip2(s.sys, v)}</td>
       <td class="want ${good ? 'good' : 'no'}">${ico(good ? 'check' : 'cross')}<span>${want ? 'debe ser designada' : 'no debe ser designada'}</span></td></tr>`;
   }).join('');
   ST.all = all;
   if (S.glb) {   // L: no hay designados fijos; la conclusión tiene que quedar por debajo del mínimo de las premisas
-    const mins = Math.min(1, ...ST.prem.map(f => SEM.evMV(s.sys, f, ST.val))), cv = SEM.evMV(s.sys, ST.goal, ST.val);
-    ST.all = SEM.glbFails(s.sys, ST.prem, ST.goal, ST.val);
-    const rows2 = [...ST.prem.map(f => ['Premisa', f]), ['Conclusión', ST.goal]].map(([lab, f]) => `<tr><td class="lab">${lab}</td><td>${fh(f)}</td><td>${vchip2(s.sys, SEM.evMV(s.sys, f, ST.val))}</td></tr>`).join('');
+    const mins = Math.min(1, ...ST.prem.map(f => SEM.evMV(s.sys, f, ST.val, s.dom))), cv = SEM.evMV(s.sys, ST.goal, ST.val, s.dom);
+    ST.all = SEM.glbFails(s.sys, ST.prem, ST.goal, ST.val, s.dom);
+    const rows2 = [...ST.prem.map(f => ['Premisa', f]), ['Conclusión', ST.goal]].map(([lab, f]) => `<tr><td class="lab">${lab}</td><td>${fh(f)}</td><td>${vchip2(s.sys, SEM.evMV(s.sys, f, ST.val, s.dom))}</td></tr>`).join('');
     return `<div class="proof">${goalHTML('CONTRAEJEMPLO', ST.prem, ST.goal, '⊬', S.name)}
       <div class="cols"><div class="panel model">
         <div class="mlabel">VALORES</div>
@@ -701,7 +701,7 @@ function scrModel() {
         <div class="vals">${ST.atoms.map(a => `<div class="vrow"><span class="fm">${esc(a)}</span><span class="seg">${S.vals.map(v => `<button class="vbtn ${vcls(v)}${ST.val[a] === v ? ' on' : ''}" data-act="val" data-a="${a}" data-v="${v}" aria-pressed="${ST.val[a] === v}">${esc(SEM.vname(s.sys, v))}</button>`).join('')}</span></div>`).join('')}</div>
         <div class="mlabel">RESULTADO</div>
         <div class="tw"><table class="tbl vt"><tbody>${rows}</tbody></table></div>
-        <p class="cap">Valores designados: ${S.des.map(v => SEM.vname(s.sys, v)).join(' y ')}.</p>
+        <p class="cap">${s.dom ? `Dominio: {${s.dom.join(', ')}}; ∀ toma el mínimo y ∃ el máximo. ` : ''}Valores designados: ${S.des.map(v => SEM.vname(s.sys, v)).join(' y ')}.</p>
       </div>
       <div class="side">${sayBox(ST.msg, true)}</div>
     </div>
@@ -780,11 +780,12 @@ function labResult() {
   const cmp = r.cmp ? `<p class="vcmp">En la lógica clásica: <b class="${r.cmp === 'valid' ? 'good' : 'no'}">${r.cmp === 'valid' ? 'válida' : r.cmp === 'invalid' ? 'inválida' : 'sin decidir'}</b></p>` : '';
   let body = '';
   if (r.tab) body = `<div class="sheet treebox small">${treeHTML(r.tab, { still: true, openLeaf: r.open && r.open.id })}</div>` + (r.model ? modelHTML(r.tab.sys, r.model, ST.prem, ST.concl) : '');
-  else if (r.mv && r.mv.model) body = `<div class="mlabel">CONTRAEJEMPLO</div><div class="gats">${r.mv.model.atoms.map(a => `<span class="gat">${fm(a)} ${vchip2(ST.sys, r.mv.model.vals[a])}</span>`).join('')}</div>`;
+  else if (r.mv && r.mv.model) body = `<div class="mlabel">CONTRAEJEMPLO${r.mv.model.dom ? ' · DOMINIO {' + r.mv.model.dom.join(', ') + '}' : ''}</div><div class="gats">${r.mv.model.atoms.map(a => `<span class="gat">${fm(a)} ${vchip2(ST.sys, r.mv.model.vals[a])}</span>`).join('')}</div>`;
   return `<div class="panel vres ${cls}"><div class="vverd">${ico(icon)}<span>${word}</span><small>${esc(sysName(ST.sys))}</small></div>${cmp}${body}</div>`;
 }
 function labSay(r) {
   if (isMV(ST.sys)) {
+    if (r.v === 'valid' && r.how === 'dom') return `Ningún dominio de uno a tres objetos da un contraejemplo (revisé ${r.rows} valuaciones en el último). Es un buen indicio, no una prueba: los dominios pueden ser infinitos.`;
     if (r.v === 'valid' && r.how === 'grid') return `Ninguna de las ${r.rows} valuaciones de la cuadrícula (de décimo en décimo) la refuta. Es un buen indicio de validez, aunque no una prueba: en L los valores son infinitos.`;
     if (r.v === 'valid') return `¡Válida! Revisé las ${r.rows} valuaciones: en ninguna las premisas son designadas y la conclusión no.`;
     if (r.v === 'invalid') return 'Inválida. Con estos valores las premisas son designadas y la conclusión no.';
@@ -810,7 +811,7 @@ function labGoals(r) {
   }
 }
 function runCheck(sys, prem, concl) {
-  if (isMV(sys)) { const m = SEM.checkMV(sys, prem, concl); return { v: m.v, rows: m.rows, mv: m }; }
+  if (isMV(sys)) { const m = SEM.checkMV(sys, prem, concl, ST.stage.fo ? true : undefined); return { v: m.v, rows: m.rows, mv: m, how: m.how }; }
   const r = TB.solve(sys, prem, concl, 500);
   const out = { v: r.verdict, tab: r.t, open: r.open };
   if (r.open) out.model = TB.readModel(r.t, r.open);

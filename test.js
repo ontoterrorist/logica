@@ -31,7 +31,7 @@ C.worlds.forEach(W => {
         if (process.argv.includes('-v')) console.log(`${where}: ${r.verdict} (${r.t.nodes.length})`);
       }
       if (s.t === 'M') {
-        const m = SEM.checkMV(s.sys, s.prem.map(L.parse), s.concl ? L.parse(s.concl) : L.parse('p∧¬p'));
+        const m = SEM.checkMV(s.sys, s.prem.map(L.parse), s.concl ? L.parse(s.concl) : L.parse('p∧¬p'), s.dom);
         if (s.concl && m.v !== 'invalid') err(`${where}: no tiene contraejemplo en ${s.sys}`);
       }
       if (s.t === 'TT') s.cols.forEach(c => SEM.valuations(s.sys, L.atomsOf([L.parse(c)])).forEach(v => SEM.evMV(s.sys, L.parse(c), v)));
@@ -39,7 +39,7 @@ C.worlds.forEach(W => {
         const sys = e[3] || s.sys[0];
         let v;
         if (TB.SYS[sys] && !(s.mv && Sem.MV[sys])) v = TB.solve(sys, e[0].map(L.parse), L.parse(e[1]), 600).verdict;
-        else v = SEM.checkMV(sys, e[0].map(L.parse), L.parse(e[1])).v;
+        else v = SEM.checkMV(sys, e[0].map(L.parse), L.parse(e[1]), s.fo ? true : undefined).v;
         if (e[2] && v !== e[2]) err(`${where}: ejemplo ${e[0].join(', ')} ⊢ ${e[1]} en ${sys} da ${v}, anotado ${e[2]}`);
       });
       if (s.t === 'T') s.pages.forEach(p => { const f = p.fig; [].concat(f || []).forEach(g => { if (g.k === 'tab') { const r = TB.solve(g.sys, g.prem.map(L.parse), L.parse(g.concl), 300); if (r.verdict === 'unknown') err(`${where}: la figura ${g.prem.join(', ')} ⊢ ${g.concl} no termina`); } }); });
