@@ -10,7 +10,7 @@ const fontCss = FONTS.map(([name, file]) =>
 
 /* fondos de los mundos (tools/fondos.py): src/bg/w<k>.png pasa a la variable --img-w<k> */
 const bgDir = path.join(__dirname, 'src', 'bg');
-const bgs = fs.existsSync(bgDir) ? fs.readdirSync(bgDir).filter(f => /^w\d+\.png$/.test(f)).sort() : [];
+const bgs = fs.existsSync(bgDir) ? fs.readdirSync(bgDir).filter(f => /^(w\d+|title)\.png$/.test(f)).sort() : [];
 const bgCss = bgs.length ? ':root {\n' + bgs.map(f => `  --img-${f.slice(0, -4)}: url(data:image/png;base64,${b64(path.join(bgDir, f))});`).join('\n') + '\n}' : '';
 
 /* color de cada capítulo (en el orden del mapa): insignia, velo del fondo y cuadros de la pantalla */
